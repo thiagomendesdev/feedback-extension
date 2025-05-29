@@ -288,6 +288,27 @@ function App() {
     return tmpCanvas.toDataURL('image/jpeg', 0.7);
   }
 
+  // Função para coletar informações do ambiente
+  function collectFrontendEnvInfo() {
+    return {
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+      screen: {
+        width: window.screen.width,
+        height: window.screen.height,
+      },
+      devicePixelRatio: window.devicePixelRatio,
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      languages: navigator.languages,
+      platform: navigator.platform,
+      colorScheme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+      date: new Date().toISOString(),
+    };
+  }
+
   // Envio real para o Linear
   const handleSend = async () => {
     if (!token || !teamId) {
@@ -313,56 +334,72 @@ function App() {
     if (sendWithImage) {
       finalImage = await getCompressedImageDataUrl(canvasRef.current);
     }
-    const description = details + (sendWithImage && finalImage ? '\n\n![screenshot](' + finalImage + ')' : '');
-    const mutation = `
-      mutation CreateIssue($input: IssueCreateInput!) {
-        issueCreate(input: $input) {
-          success
-          issue {
-            id
-            identifier
-            url
+    // Coletar informações do ambiente
+    const envInfo = collectFrontendEnvInfo();
+    // Pegar URL da aba ativa
+    function sendWithTabUrl(tabUrl) {
+      envInfo.tabUrl = tabUrl;
+      const description = details +
+        (sendWithImage && finalImage ? '\n\n![screenshot](' + finalImage + ')' : '') +
+        '\n\n---\nInformações do ambiente:\n```json\n' + JSON.stringify(envInfo, null, 2) + '\n```';
+      const mutation = `
+        mutation CreateIssue($input: IssueCreateInput!) {
+          issueCreate(input: $input) {
+            success
+            issue {
+              id
+              identifier
+              url
+            }
           }
         }
-      }
-    `;
-    const variables = {
-      input: {
-        teamId,
-        title,
-        description,
-      }
-    };
-    try {
-      const res = await fetch('https://api.linear.app/graphql', {
+      `;
+      const variables = {
+        input: {
+          teamId,
+          title,
+          description,
+        }
+      };
+      fetch('https://api.linear.app/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token
         },
         body: JSON.stringify({ query: mutation, variables })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data?.data?.issueCreate?.success) {
+            setToastMsg('Feedback enviado para o Linear!');
+            setToastError(false);
+            setToastOpen(true);
+            setStep('idle');
+            setImage(null);
+            setTitle('');
+            setDetails('');
+          } else {
+            const gqlError = data.errors?.[0];
+            setToastMsg('Erro ao enviar para o Linear: ' + (gqlError?.message || 'Erro desconhecido') + (gqlError ? '\n' + JSON.stringify(gqlError, null, 2) : ''));
+            setToastError(true);
+            setToastOpen(true);
+            setStep('draw');
+          }
+        })
+        .catch(err => {
+          setToastMsg('Erro ao enviar para o Linear: ' + err.message);
+          setToastError(true);
+          setToastOpen(true);
+          setStep('draw');
+        });
+    }
+    if (window.chrome?.tabs) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        sendWithTabUrl(tabs[0]?.url || '');
       });
-      const data = await res.json();
-      if (data?.data?.issueCreate?.success) {
-        setToastMsg('Feedback enviado para o Linear!');
-        setToastError(false);
-        setToastOpen(true);
-        setStep('idle');
-        setImage(null);
-        setTitle('');
-        setDetails('');
-      } else {
-        const gqlError = data.errors?.[0];
-        setToastMsg('Erro ao enviar para o Linear: ' + (gqlError?.message || 'Erro desconhecido') + (gqlError ? '\n' + JSON.stringify(gqlError, null, 2) : ''));
-        setToastError(true);
-        setToastOpen(true);
-        setStep('draw');
-      }
-    } catch (err) {
-      setToastMsg('Erro ao enviar para o Linear: ' + err.message);
-      setToastError(true);
-      setToastOpen(true);
-      setStep('draw');
+    } else {
+      sendWithTabUrl('');
     }
   };
 
