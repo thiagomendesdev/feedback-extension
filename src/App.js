@@ -24,6 +24,9 @@ function App() {
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
   const lastPoint = useRef(null);
+  const [selectingArea, setSelectingArea] = useState(false);
+  const [selection, setSelection] = useState(null); // {x, y, w, h}
+  const [selectionStart, setSelectionStart] = useState(null);
 
   // Carregar config do localStorage
   useEffect(() => {
@@ -96,12 +99,97 @@ function App() {
       return;
     }
     setStep('capturing');
-    // Chrome extension: captura da aba ativa
     // eslint-disable-next-line no-undef
     chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
       setImage(dataUrl);
-      setStep('draw');
+      setStep('select');
+      setSelectingArea(true);
+      setSelection(null);
+      setSelectionStart(null);
     });
+  };
+
+  // Seleção de área no canvas
+  useEffect(() => {
+    if (step === 'select' && image && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      const img = new window.Image();
+      img.onload = () => {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = image;
+    }
+  }, [step, image]);
+
+  const handleSelectionMouseDown = (e) => {
+    const rect = e.target.getBoundingClientRect();
+    const scaleX = e.target.width / rect.width;
+    const scaleY = e.target.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    setSelectionStart({ x, y });
+    setSelection({ x, y, w: 0, h: 0 });
+    setSelectingArea(true);
+  };
+  const handleSelectionMouseMove = (e) => {
+    if (!selectingArea || !selectionStart) return;
+    const rect = e.target.getBoundingClientRect();
+    const scaleX = e.target.width / rect.width;
+    const scaleY = e.target.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    setSelection({
+      x: selectionStart.x,
+      y: selectionStart.y,
+      w: x - selectionStart.x,
+      h: y - selectionStart.y,
+    });
+  };
+  const handleSelectionMouseUp = () => {
+    setSelectingArea(false);
+  };
+
+  // Desenhar retângulo de seleção
+  useEffect(() => {
+    if (step === 'select' && selection && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      const img = new window.Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        if (selection && (Math.abs(selection.w) > 5 && Math.abs(selection.h) > 5)) {
+          ctx.save();
+          ctx.strokeStyle = '#e11d48';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.strokeRect(selection.x, selection.y, selection.w, selection.h);
+          ctx.restore();
+        }
+      };
+      img.src = image;
+    }
+  }, [step, selection, image]);
+
+  // Recortar área selecionada e ir para etapa de desenho
+  const handleCropAndDraw = () => {
+    if (!selection || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const sx = Math.min(selection.x, selection.x + selection.w);
+    const sy = Math.min(selection.y, selection.y + selection.h);
+    const sw = Math.abs(selection.w);
+    const sh = Math.abs(selection.h);
+    const cropped = document.createElement('canvas');
+    cropped.width = sw;
+    cropped.height = sh;
+    const ctx = cropped.getContext('2d');
+    ctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+    setImage(cropped.toDataURL('image/png'));
+    setStep('draw');
   };
 
   // Carregar a imagem no canvas ao abrir o modal
@@ -306,6 +394,27 @@ function App() {
         </button>
       )}
       {step === 'capturing' && <p>Capturando tela...</p>}
+      {step === 'select' && image && (
+        <Dialog.Root open>
+          <Dialog.Content className="radix-dialog-content">
+            <div style={{ marginBottom: 12, fontSize: 14, color: '#e11d48' }}>
+              Selecione uma área da captura para enviar feedback
+            </div>
+            <div style={{ position: 'relative', marginBottom: 16, width: 320 }}>
+              <canvas
+                ref={canvasRef}
+                style={{ border: '2px solid #e5e7eb', borderRadius: 8, cursor: 'crosshair', maxWidth: 320, width: '100%', display: 'block' }}
+                onMouseDown={handleSelectionMouseDown}
+                onMouseMove={handleSelectionMouseMove}
+                onMouseUp={handleSelectionMouseUp}
+              />
+            </div>
+            <button className="radix-btn" style={{ marginTop: 8 }} disabled={!selection || Math.abs(selection.w) < 10 || Math.abs(selection.h) < 10} onClick={handleCropAndDraw}>
+              Usar área selecionada
+            </button>
+          </Dialog.Content>
+        </Dialog.Root>
+      )}
       {step === 'draw' && image && (
         <Dialog.Root open>
           <Dialog.Content className="radix-dialog-content">
