@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Feedback Linear Extension",
+  "version": "0.1.0",
+  "description": "Capture, desenhe e envie feedbacks para o Linear.",
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "favicon.ico",
+      "32": "logo192.png",
+      "48": "logo192.png",
+      "128": "logo512.png"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "16": "favicon.ico",
+    "32": "logo192.png",
+    "48": "logo192.png",
+    "128": "logo512.png"
+  }
+}
