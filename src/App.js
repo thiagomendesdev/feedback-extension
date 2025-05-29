@@ -453,8 +453,11 @@ function App() {
               <button className="radix-btn" style={{ background: '#e5e7eb', color: '#222' }} onClick={() => setShowConfig(false)}>Cancelar</button>
             </div>
             <p style={{ fontSize: 12, color: '#888', marginTop: 8 }}>
-              Gere um token em <a href="https://linear.app/settings/api" target="_blank" rel="noreferrer">linear.app/settings/api</a>.<br />
-              O time será listado automaticamente após informar o token.
+              Você pode gerar um token de API em{' '}
+              <a href="https://linear.app/moises/settings/account/security/api-keys/new" target="_blank" rel="noreferrer">
+                linear.app/moises/settings/account/security/api-keys/new
+              </a>
+              .
             </p>
           </Dialog.Content>
         </Dialog.Root>
@@ -484,7 +487,6 @@ function App() {
                 onMouseOut={handleCanvasMouseUp}
                 onMouseMove={e => handleCanvasMouseMove(e)}
               />
-              <span style={{ position: 'absolute', top: 8, left: 8, background: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 12, color: '#e11d48', display: 'flex', alignItems: 'center', gap: 4 }}><Pencil2Icon />Desenhe aqui</span>
             </div>
             <form
               onSubmit={e => {
@@ -504,7 +506,6 @@ function App() {
               <Label.Root htmlFor="details">Detalhes</Label.Root>
               <textarea
                 id="details"
-                required
                 value={details}
                 onChange={e => setDetails(e.target.value)}
                 style={{ padding: 8, borderRadius: 4, border: '1px solid #e5e7eb', minHeight: 60 }}
@@ -518,17 +519,13 @@ function App() {
       )}
       {step === 'sending' && <p>Enviando feedback...</p>}
       <Toast.Provider swipeDirection="right">
-        <Toast.Root open={toastOpen} onOpenChange={setToastOpen} className="radix-toast-root" style={toastError ? { background: '#fee2e2', color: '#b91c1c', maxHeight: 220, overflow: 'auto', whiteSpace: 'pre-wrap' } : { maxHeight: 220, overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-          <Toast.Title>{toastError ? 'Erro' : 'Feedback enviado!'}</Toast.Title>
-          <Toast.Description>{toastMsg}</Toast.Description>
-          {toastError && (
-            <button style={{ marginTop: 8, fontSize: 12, background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer' }}
-              onClick={() => { navigator.clipboard.writeText(toastMsg); }}>
-              Copiar erro
-            </button>
-          )}
+        <Toast.Root className={`ToastRoot ${toastError ? 'error' : ''}`} open={toastOpen} onOpenChange={setToastOpen} duration={2000} >
+          <Toast.Title className="ToastTitle">{toastError ? 'Erro' : 'Sucesso!'}</Toast.Title>
+          <Toast.Description asChild>
+            <p>{toastMsg}</p>
+          </Toast.Description>
         </Toast.Root>
-        <Toast.Viewport className="radix-toast-viewport" />
+        <Toast.Viewport className="ToastViewport" />
       </Toast.Provider>
     </div>
   );
