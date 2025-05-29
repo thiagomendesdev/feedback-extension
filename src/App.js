@@ -1,3 +1,4 @@
+/* global chrome */
 import React, { useRef, useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Label from '@radix-ui/react-label';
@@ -27,6 +28,7 @@ function App() {
   const [selectingArea, setSelectingArea] = useState(false);
   const [selection, setSelection] = useState(null); // {x, y, w, h}
   const [selectionStart, setSelectionStart] = useState(null);
+  const [selectedArea, setSelectedArea] = useState(null);
 
   // Carregar config do localStorage
   useEffect(() => {
@@ -92,20 +94,50 @@ function App() {
     setToastOpen(true);
   };
 
-  // Captura da tela da aba
+  // Ao abrir o popup, pedir ao background se há área selecionada
+  useEffect(() => {
+    chrome.runtime.sendMessage({ type: 'GET_FEEDBACK_AREA' }, (res) => {
+      if (res && res.area) {
+        setSelectedArea(res.area);
+      }
+    });
+  }, []);
+
+  // Quando selectedArea mudar, capturar tela e recortar
+  useEffect(() => {
+    if (!selectedArea) return;
+    setStep('capturing');
+    chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const scaleX = img.naturalWidth / selectedArea.pageW;
+        const scaleY = img.naturalHeight / selectedArea.pageH;
+        const sx = Math.round(selectedArea.x * scaleX);
+        const sy = Math.round(selectedArea.y * scaleY);
+        const sw = Math.round(selectedArea.w * scaleX);
+        const sh = Math.round(selectedArea.h * scaleY);
+        const cropped = document.createElement('canvas');
+        cropped.width = sw;
+        cropped.height = sh;
+        const ctx = cropped.getContext('2d');
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+        setImage(cropped.toDataURL('image/png'));
+        setStep('draw');
+        setSelectedArea(null);
+      };
+      img.src = dataUrl;
+    });
+  }, [selectedArea]);
+
+  // handleCapture só dispara a seleção
   const handleCapture = async () => {
     if (!window.chrome?.tabs) {
       alert('Só funciona como extensão Chrome!');
       return;
     }
-    setStep('capturing');
-    // eslint-disable-next-line no-undef
-    chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
-      setImage(dataUrl);
-      setStep('select');
-      setSelectingArea(true);
-      setSelection(null);
-      setSelectionStart(null);
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (!tabs[0]?.id) return;
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'START_FEEDBACK_SELECTION' });
     });
   };
 
@@ -394,27 +426,6 @@ function App() {
         </button>
       )}
       {step === 'capturing' && <p>Capturando tela...</p>}
-      {step === 'select' && image && (
-        <Dialog.Root open>
-          <Dialog.Content className="radix-dialog-content">
-            <div style={{ marginBottom: 12, fontSize: 14, color: '#e11d48' }}>
-              Selecione uma área da captura para enviar feedback
-            </div>
-            <div style={{ position: 'relative', marginBottom: 16, width: 320 }}>
-              <canvas
-                ref={canvasRef}
-                style={{ border: '2px solid #e5e7eb', borderRadius: 8, cursor: 'crosshair', maxWidth: 320, width: '100%', display: 'block' }}
-                onMouseDown={handleSelectionMouseDown}
-                onMouseMove={handleSelectionMouseMove}
-                onMouseUp={handleSelectionMouseUp}
-              />
-            </div>
-            <button className="radix-btn" style={{ marginTop: 8 }} disabled={!selection || Math.abs(selection.w) < 10 || Math.abs(selection.h) < 10} onClick={handleCropAndDraw}>
-              Usar área selecionada
-            </button>
-          </Dialog.Content>
-        </Dialog.Root>
-      )}
       {step === 'draw' && image && (
         <Dialog.Root open>
           <Dialog.Content className="radix-dialog-content">
