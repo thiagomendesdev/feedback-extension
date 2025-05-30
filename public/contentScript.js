@@ -6,6 +6,7 @@
   let overlay, selectionBox, startX, startY, endX, endY, selecting = false;
   let timerEnabled = false;
   let tooltipDiv = null;
+  let dragStarted = false; // Nova variável para detectar se houve arraste
 
   function createOverlay(opts = {}) {
     timerEnabled = !!opts.timer;
@@ -29,7 +30,7 @@
 
     // Tooltip
     tooltipDiv = document.createElement('div');
-    tooltipDiv.textContent = 'Arraste para selecionar área ou clique para selecionar tudo';
+    tooltipDiv.textContent = 'Arraste para selecionar área ou clique para capturar tela inteira';
     tooltipDiv.style.position = 'fixed';
     tooltipDiv.style.background = 'rgba(34,34,34,0.95)';
     tooltipDiv.style.color = '#fff';
@@ -60,6 +61,7 @@
 
   function onMouseDown(e) {
     selecting = true;
+    dragStarted = false; // Reset da flag de arraste
     startX = e.clientX;
     startY = e.clientY;
     selectionBox.style.left = startX + 'px';
@@ -70,6 +72,14 @@
 
   function onMouseMove(e) {
     if (!selecting) return;
+    
+    // Detecta se houve movimento significativo (arraste)
+    const deltaX = Math.abs(e.clientX - startX);
+    const deltaY = Math.abs(e.clientY - startY);
+    if (deltaX > 5 || deltaY > 5) {
+      dragStarted = true;
+    }
+    
     endX = e.clientX;
     endY = e.clientY;
     const x = Math.min(startX, endX);
@@ -143,12 +153,26 @@
     selecting = false;
     endX = e.clientX;
     endY = e.clientY;
-    const x = Math.min(startX, endX);
-    const y = Math.min(startY, endY);
-    const w = Math.abs(endX - startX);
-    const h = Math.abs(endY - startY);
+    
+    let x, y, w, h;
+    
+    // Se não houve arraste significativo, captura a tela inteira
+    if (!dragStarted) {
+      x = 0;
+      y = 0;
+      w = window.innerWidth;
+      h = window.innerHeight;
+    } else {
+      // Área selecionada pelo usuário
+      x = Math.min(startX, endX);
+      y = Math.min(startY, endY);
+      w = Math.abs(endX - startX);
+      h = Math.abs(endY - startY);
+    }
+    
     removeOverlay();
     const areaObj = { x, y, w, h, pageW: window.innerWidth, pageH: window.innerHeight, scrollX: window.scrollX, scrollY: window.scrollY };
+    
     if (timerEnabled) {
       showTimerAndSend(x, y, w, h, areaObj);
     } else {
