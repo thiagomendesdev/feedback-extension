@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Label from '@radix-ui/react-label';
 import * as Toast from '@radix-ui/react-toast';
-import { Pencil2Icon, CameraIcon, PaperPlaneIcon } from '@radix-ui/react-icons';
+import { Pencil2Icon, CameraIcon, PaperPlaneIcon, SquareIcon, CircleIcon, TrashIcon } from '@radix-ui/react-icons';
 import './App.css';
 
 function App() {
@@ -31,6 +31,9 @@ function App() {
   const [selectedArea, setSelectedArea] = useState(null);
   const [useTimer, setUseTimer] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [drawMode, setDrawMode] = useState('free'); // 'free' | 'rect' | 'circle'
+  const [shapes, setShapes] = useState([]); // {type, x, y, w, h}
+  const [currentShape, setCurrentShape] = useState(null); // preview do shape
 
   // Carregar config do localStorage
   useEffect(() => {
@@ -189,74 +192,30 @@ function App() {
     setSelectingArea(false);
   };
 
-  // Desenhar retângulo de seleção
-  useEffect(() => {
-    if (step === 'select' && selection && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      const img = new window.Image();
-      img.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        if (selection && (Math.abs(selection.w) > 5 && Math.abs(selection.h) > 5)) {
-          ctx.save();
-          ctx.strokeStyle = '#e11d48';
-          ctx.lineWidth = 2;
-          ctx.setLineDash([6, 4]);
-          ctx.strokeRect(selection.x, selection.y, selection.w, selection.h);
-          ctx.restore();
-        }
-      };
-      img.src = image;
-    }
-  }, [step, selection, image]);
-
-  // Recortar área selecionada e ir para etapa de desenho
-  const handleCropAndDraw = () => {
-    if (!selection || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const sx = Math.min(selection.x, selection.x + selection.w);
-    const sy = Math.min(selection.y, selection.y + selection.h);
-    const sw = Math.abs(selection.w);
-    const sh = Math.abs(selection.h);
-    const cropped = document.createElement('canvas');
-    cropped.width = sw;
-    cropped.height = sh;
-    const ctx = cropped.getContext('2d');
-    ctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-    setImage(cropped.toDataURL('image/png'));
-    setStep('draw');
-  };
-
-  // Carregar a imagem no canvas ao abrir o modal
-  useEffect(() => {
-    if (step === 'draw' && image && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      const img = new window.Image();
-      img.onload = () => {
-        // Ajusta o tamanho do canvas para a imagem
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-      };
-      img.src = image;
-    }
-  }, [step, image]);
-
   // Desenho sobre a imagem, corrigindo escala
   const handleCanvasMouseDown = (e) => {
-    setDrawing(true);
     const rect = e.target.getBoundingClientRect();
     const scaleX = e.target.width / rect.width;
     const scaleY = e.target.height / rect.height;
-    lastPoint.current = {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
-    };
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    if (drawMode === 'free') {
+      setDrawing(true);
+      lastPoint.current = { x, y };
+    } else if (drawMode === 'rect' || drawMode === 'circle') {
+      setDrawing(true);
+      setCurrentShape({ type: drawMode, x, y, w: 0, h: 0 });
+    }
   };
-  const handleCanvasMouseUp = () => setDrawing(false);
+  const handleCanvasMouseUp = () => {
+    if (drawMode === 'free') {
+      setDrawing(false);
+    } else if ((drawMode === 'rect' || drawMode === 'circle') && currentShape) {
+      setDrawing(false);
+      setShapes([...shapes, currentShape]);
+      setCurrentShape(null);
+    }
+  };
   const handleCanvasMouseMove = (e) => {
     if (!drawing) return;
     const canvas = canvasRef.current;
@@ -266,13 +225,96 @@ function App() {
     const scaleY = canvas.height / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
-    ctx.strokeStyle = '#e11d48';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    lastPoint.current = { x, y };
+    if (drawMode === 'free') {
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      lastPoint.current = { x, y };
+    } else if ((drawMode === 'rect' || drawMode === 'circle') && currentShape) {
+      setCurrentShape({
+        ...currentShape,
+        w: x - currentShape.x,
+        h: y - currentShape.y,
+      });
+    }
+  };
+
+  // Redesenhar tudo ao mudar shapes, imagem ou currentShape
+  useEffect(() => {
+    if (step !== 'draw' || !image || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const img = new window.Image();
+    img.onload = () => {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      // shapes
+      shapes.forEach(shape => {
+        ctx.save();
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        if (shape.type === 'rect') {
+          ctx.strokeRect(shape.x, shape.y, shape.w, shape.h);
+        } else if (shape.type === 'circle') {
+          ctx.beginPath();
+          ctx.ellipse(
+            shape.x + shape.w / 2,
+            shape.y + shape.h / 2,
+            Math.abs(shape.w / 2),
+            Math.abs(shape.h / 2),
+            0, 0, 2 * Math.PI
+          );
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+      // preview
+      if (currentShape) {
+        ctx.save();
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        if (currentShape.type === 'rect') {
+          ctx.strokeRect(currentShape.x, currentShape.y, currentShape.w, currentShape.h);
+        } else if (currentShape.type === 'circle') {
+          ctx.beginPath();
+          ctx.ellipse(
+            currentShape.x + currentShape.w / 2,
+            currentShape.y + currentShape.h / 2,
+            Math.abs(currentShape.w / 2),
+            Math.abs(currentShape.h / 2),
+            0, 0, 2 * Math.PI
+          );
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    };
+    img.src = image;
+  }, [step, image, shapes, currentShape]);
+
+  // Limpar desenhos
+  const handleClearDrawings = () => {
+    if (!canvasRef.current || !image) return;
+    setShapes([]);
+    setCurrentShape(null);
+    // Redesenha só a imagem
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const img = new window.Image();
+    img.onload = () => {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = image;
   };
 
   // Função para reduzir e comprimir a imagem
@@ -493,10 +535,17 @@ function App() {
               </label>
             </div>
             <div style={{ position: 'relative', marginBottom: 16, width: 320 }}>
+              {/* Barra de ferramentas de desenho */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <button type="button" className="radix-btn" style={{ background: drawMode==='free' ? '#e11d48' : '#e5e7eb', color: drawMode==='free' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('free')} title="Desenho livre"><Pencil2Icon /></button>
+                <button type="button" className="radix-btn" style={{ background: drawMode==='rect' ? '#e11d48' : '#e5e7eb', color: drawMode==='rect' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('rect')} title="Retângulo"><SquareIcon /></button>
+                <button type="button" className="radix-btn" style={{ background: drawMode==='circle' ? '#e11d48' : '#e5e7eb', color: drawMode==='circle' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('circle')} title="Círculo"><CircleIcon /></button>
+                <button type="button" className="radix-btn" style={{ background: '#e5e7eb', color: '#222', padding: 6 }} onClick={handleClearDrawings} title="Limpar desenhos"><TrashIcon /></button>
+              </div>
               {/* Carrega a imagem no canvas ao abrir o modal */}
               <canvas
                 ref={canvasRef}
-                style={{ border: '2px solid #e5e7eb', borderRadius: 8, cursor: 'crosshair', maxWidth: 320, width: '100%', display: 'block' }}
+                style={{ border: '2px solid #e5e7eb', borderRadius: 8, cursor: drawMode==='free' ? 'crosshair' : 'pointer', maxWidth: 320, width: '100%', display: 'block' }}
                 onMouseDown={e => handleCanvasMouseDown(e)}
                 onMouseUp={handleCanvasMouseUp}
                 onMouseOut={handleCanvasMouseUp}
