@@ -8,7 +8,6 @@ import {
   Textarea, 
   Modal, 
   Group, 
-  Title, 
   Text, 
   Select, 
   Checkbox, 
@@ -471,175 +470,156 @@ function App() {
   // Renderização
   return (
     <Container size="sm" p="md" style={{ minWidth: 340 }}>
-      {/* Debug info */}
-      <div style={{ fontSize: '10px', color: 'gray', marginBottom: '8px' }}>
-        Debug - Step: {step}, Image: {image ? 'YES' : 'NO'}
-      </div>
-
       {step === 'idle' && (
-        <Paper p="md" shadow="sm">
-          <Flex justify="space-between" align="center" mb="md">
-            <Title order={2}>Feedback para o Linear</Title>
+        <Stack gap="md">
+          <Flex justify="flex-end" align="center">
             <ActionIcon variant="light" onClick={openConfig} size="lg">
               <IconSettings size={18} />
             </ActionIcon>
           </Flex>
           
-          <Stack gap="md">
-            <Group>
-              <Button 
-                leftSection={<IconCamera size={16} />} 
-                onClick={handleCapture}
-                variant="filled"
-              >
-                Capturar tela da aba
-              </Button>
-              <Checkbox 
-                label="Timer 3s" 
-                checked={useTimer} 
-                onChange={(e) => setUseTimer(e.currentTarget.checked)}
-                size="sm"
-              />
-            </Group>
-          </Stack>
-        </Paper>
+          <Group>
+            <Button 
+              leftSection={<IconCamera size={16} />} 
+              onClick={handleCapture}
+              variant="filled"
+            >
+              Capturar tela da aba
+            </Button>
+            <Checkbox 
+              label="Timer 3s" 
+              checked={useTimer} 
+              onChange={(e) => setUseTimer(e.currentTarget.checked)}
+              size="sm"
+            />
+          </Group>
+        </Stack>
       )}
 
       {step === 'capturing' && (
-        <Paper p="md" ta="center">
-          <Group justify="center">
-            <Loader size="sm" />
-            <Text>Capturando tela...</Text>
-          </Group>
-        </Paper>
+        <Group justify="center" style={{ minHeight: '200px', alignItems: 'center' }}>
+          <Loader size="sm" />
+          <Text>Capturando tela...</Text>
+        </Group>
       )}
 
       {step === 'draw' && (
-        <Paper p="md" shadow="sm" style={{ minHeight: '80vh' }}>
-          <Stack gap="md" style={{ height: '100%' }}>
-            <Group justify="space-between" align="center">
-              <Title order={3}>Editar Screenshot</Title>
-              <Group>
-                <ActionIcon.Group>
-                  <ActionIcon 
-                    variant={drawMode === 'free' ? 'filled' : 'light'}
-                    onClick={() => setDrawMode('free')}
-                    title="Desenho livre"
-                  >
-                    <IconPencil size={16} />
-                  </ActionIcon>
-                  <ActionIcon 
-                    variant={drawMode === 'rect' ? 'filled' : 'light'}
-                    onClick={() => setDrawMode('rect')}
-                    title="Retângulo"
-                  >
-                    <IconSquare size={16} />
-                  </ActionIcon>
-                  <ActionIcon 
-                    variant={drawMode === 'circle' ? 'filled' : 'light'}
-                    onClick={() => setDrawMode('circle')}
-                    title="Círculo"
-                  >
-                    <IconCircle size={16} />
-                  </ActionIcon>
-                  <ActionIcon 
-                    variant="light"
-                    onClick={handleClearDrawings}
-                    title="Limpar desenhos"
-                    color="red"
-                  >
-                    <IconTrash size={16} />
-                  </ActionIcon>
-                </ActionIcon.Group>
-              </Group>
-            </Group>
+        <Stack gap="md" style={{ minHeight: '95vh' }}>
+          <Group justify="flex-end" align="center">
+            <ActionIcon.Group>
+              <ActionIcon 
+                variant={drawMode === 'free' ? 'filled' : 'light'}
+                onClick={() => setDrawMode('free')}
+                title="Desenho livre"
+              >
+                <IconPencil size={16} />
+              </ActionIcon>
+              <ActionIcon 
+                variant={drawMode === 'rect' ? 'filled' : 'light'}
+                onClick={() => setDrawMode('rect')}
+                title="Retângulo"
+              >
+                <IconSquare size={16} />
+              </ActionIcon>
+              <ActionIcon 
+                variant={drawMode === 'circle' ? 'filled' : 'light'}
+                onClick={() => setDrawMode('circle')}
+                title="Círculo"
+              >
+                <IconCircle size={16} />
+              </ActionIcon>
+              <ActionIcon 
+                variant="light"
+                onClick={handleClearDrawings}
+                title="Limpar desenhos"
+                color="red"
+              >
+                <IconTrash size={16} />
+              </ActionIcon>
+            </ActionIcon.Group>
+          </Group>
 
-            {image ? (
-              <div style={{ 
-                flex: 1, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                minHeight: '300px',
-                border: '1px solid #eee',
-                borderRadius: '8px',
-                padding: '1rem'
-              }}>
-                <canvas
-                  ref={canvasRef}
-                  style={{ 
-                    border: '2px solid #e9ecef', 
-                    borderRadius: 8, 
-                    cursor: drawMode === 'free' ? 'crosshair' : 'pointer', 
-                    maxWidth: '100%', 
-                    maxHeight: '400px',
-                    display: 'block'
-                  }}
-                  onMouseDown={handleCanvasMouseDown}
-                  onMouseUp={handleCanvasMouseUp}
-                  onMouseOut={handleCanvasMouseUp}
-                  onMouseMove={handleCanvasMouseMove}
+          {image ? (
+            <div style={{ 
+              flex: 1, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              minHeight: '60vh',
+              padding: '1rem'
+            }}>
+              <canvas
+                ref={canvasRef}
+                style={{ 
+                  border: '2px solid #e9ecef', 
+                  borderRadius: 8, 
+                  cursor: drawMode === 'free' ? 'crosshair' : 'pointer', 
+                  maxWidth: '100%', 
+                  maxHeight: '60vh',
+                  display: 'block'
+                }}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseUp={handleCanvasMouseUp}
+                onMouseOut={handleCanvasMouseUp}
+                onMouseMove={handleCanvasMouseMove}
+              />
+            </div>
+          ) : (
+            <div style={{ 
+              minHeight: '60vh', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '1px dashed #ccc',
+              borderRadius: '8px'
+            }}>
+              <Text c="dimmed">Aguardando imagem...</Text>
+            </div>
+          )}
+
+          <Paper p="md" shadow="xs" style={{ marginTop: 'auto' }}>
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
+              <Stack gap="sm">
+                <TextInput
+                  label="Título"
+                  placeholder="Título do feedback"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.currentTarget.value)}
                 />
-              </div>
-            ) : (
-              <div style={{ 
-                minHeight: '300px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                border: '1px dashed #ccc',
-                borderRadius: '8px'
-              }}>
-                <Text c="dimmed">Aguardando imagem...</Text>
-              </div>
-            )}
-
-            <Paper p="md" shadow="xs">
-              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
-                <Stack gap="sm">
-                  <TextInput
-                    label="Título"
-                    placeholder="Título do feedback"
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.currentTarget.value)}
+                <Textarea
+                  label="Detalhes"
+                  placeholder="Descreva o problema ou sugestão"
+                  value={details}
+                  onChange={(e) => setDetails(e.currentTarget.value)}
+                  minRows={2}
+                  maxRows={3}
+                />
+                <Group justify="space-between">
+                  <Checkbox 
+                    label="Incluir screenshot no feedback" 
+                    checked={sendWithImage} 
+                    onChange={(e) => setSendWithImage(e.currentTarget.checked)}
                   />
-                  <Textarea
-                    label="Detalhes"
-                    placeholder="Descreva o problema ou sugestão"
-                    value={details}
-                    onChange={(e) => setDetails(e.currentTarget.value)}
-                    minRows={2}
-                    maxRows={3}
-                  />
-                  <Group justify="space-between">
-                    <Checkbox 
-                      label="Incluir screenshot no feedback" 
-                      checked={sendWithImage} 
-                      onChange={(e) => setSendWithImage(e.currentTarget.checked)}
-                    />
-                    <Button 
-                      type="submit" 
-                      leftSection={<IconSend size={16} />}
-                      size="sm"
-                    >
-                      Enviar para o Linear
-                    </Button>
-                  </Group>
-                </Stack>
-              </form>
-            </Paper>
-          </Stack>
-        </Paper>
+                  <Button 
+                    type="submit" 
+                    leftSection={<IconSend size={16} />}
+                    size="sm"
+                  >
+                    Enviar para o Linear
+                  </Button>
+                </Group>
+              </Stack>
+            </form>
+          </Paper>
+        </Stack>
       )}
 
       {step === 'sending' && (
-        <Paper p="md" ta="center">
-          <Group justify="center">
-            <Loader size="sm" />
-            <Text>Enviando feedback...</Text>
-          </Group>
-        </Paper>
+        <Group justify="center" style={{ minHeight: '200px', alignItems: 'center' }}>
+          <Loader size="sm" />
+          <Text>Enviando feedback...</Text>
+        </Group>
       )}
 
       {/* Modal de configuração */}
