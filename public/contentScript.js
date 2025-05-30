@@ -5,6 +5,7 @@
 
   let overlay, selectionBox, startX, startY, endX, endY, selecting = false;
   let timerEnabled = false;
+  let tooltipDiv = null;
 
   function createOverlay(opts = {}) {
     timerEnabled = !!opts.timer;
@@ -26,6 +27,23 @@
     selectionBox.style.background = 'rgba(225,29,72,0.08)';
     overlay.appendChild(selectionBox);
 
+    // Tooltip
+    tooltipDiv = document.createElement('div');
+    tooltipDiv.textContent = 'Arraste para selecionar área ou clique para selecionar tudo';
+    tooltipDiv.style.position = 'fixed';
+    tooltipDiv.style.background = 'rgba(34,34,34,0.95)';
+    tooltipDiv.style.color = '#fff';
+    tooltipDiv.style.fontSize = '14px';
+    tooltipDiv.style.padding = '6px 14px';
+    tooltipDiv.style.borderRadius = '6px';
+    tooltipDiv.style.pointerEvents = 'none';
+    tooltipDiv.style.zIndex = 1000001;
+    tooltipDiv.style.top = '0px';
+    tooltipDiv.style.left = '0px';
+    tooltipDiv.style.transform = 'translate(-50%, -120%)';
+    document.body.appendChild(tooltipDiv);
+
+    overlay.addEventListener('mousemove', onMouseMoveTooltip);
     overlay.addEventListener('mousedown', onMouseDown);
     overlay.addEventListener('mousemove', onMouseMove);
     overlay.addEventListener('mouseup', onMouseUp);
@@ -36,6 +54,7 @@
 
   function removeOverlay() {
     overlay?.remove();
+    tooltipDiv?.remove();
     window.__feedback_selection_overlay = false;
   }
 
@@ -63,23 +82,43 @@
     selectionBox.style.height = h + 'px';
   }
 
+  function onMouseMoveTooltip(e) {
+    if (!tooltipDiv) return;
+    tooltipDiv.style.left = e.clientX + 'px';
+    tooltipDiv.style.top = e.clientY + 'px';
+  }
+
   function showTimerAndSend(x, y, w, h, areaObj) {
-    // Cria overlay do timer
+    // Recorte da área selecionada (apenas mask, sem darkOverlay)
+    const mask = document.createElement('div');
+    mask.style.position = 'fixed';
+    mask.style.left = x + 'px';
+    mask.style.top = y + 'px';
+    mask.style.width = w + 'px';
+    mask.style.height = h + 'px';
+    mask.style.background = 'transparent';
+    mask.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.38)';
+    mask.style.pointerEvents = 'none';
+    mask.style.zIndex = 1000001;
+    document.body.appendChild(mask);
+
+    // Timer menor, no bottom da viewport
     const timerDiv = document.createElement('div');
     timerDiv.style.position = 'fixed';
-    timerDiv.style.left = (x + w/2 - 40) + 'px';
-    timerDiv.style.top = (y + h/2 - 40) + 'px';
-    timerDiv.style.width = '80px';
-    timerDiv.style.height = '80px';
+    timerDiv.style.left = '50%';
+    timerDiv.style.bottom = '32px';
+    timerDiv.style.transform = 'translateX(-50%)';
+    timerDiv.style.width = '48px';
+    timerDiv.style.height = '48px';
     timerDiv.style.background = 'rgba(225,29,72,0.92)';
     timerDiv.style.color = '#fff';
     timerDiv.style.display = 'flex';
     timerDiv.style.alignItems = 'center';
     timerDiv.style.justifyContent = 'center';
-    timerDiv.style.fontSize = '2.5rem';
+    timerDiv.style.fontSize = '1.7rem';
     timerDiv.style.fontWeight = 'bold';
     timerDiv.style.borderRadius = '50%';
-    timerDiv.style.zIndex = 1000000;
+    timerDiv.style.zIndex = 1000002;
     timerDiv.style.boxShadow = '0 2px 16px rgba(0,0,0,0.18)';
     document.body.appendChild(timerDiv);
     let count = 3;
@@ -91,6 +130,7 @@
       } else {
         clearInterval(interval);
         timerDiv.remove();
+        mask.remove();
         chrome.runtime.sendMessage({
           type: 'FEEDBACK_AREA_SELECTED',
           area: areaObj
