@@ -1,8 +1,10 @@
+@import '@radix-ui/themes/tokens/colors/gray.css';
+
 .App {
   text-align: center;
   font-family: 'Inter', system-ui, sans-serif;
-  background: #fff;
-  color: #222;
+  background: var(--gray-1);
+  color: var(--gray-12);
 }
 
 .App-logo {
@@ -17,14 +19,14 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: var(--gray-8);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: var(--gray-1);
 }
 
 .App-link {
@@ -41,8 +43,8 @@
 }
 
 .radix-btn {
-  background: #e11d48;
-  color: #fff;
+  background: var(--gray-9);
+  color: var(--gray-1);
   border: none;
   border-radius: 6px;
   padding: 10px 18px;
@@ -53,11 +55,11 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .radix-btn:hover {
-  background: #be123c;
+  background: var(--gray-10);
 }
 
 .radix-dialog-content {
-  background: #fff;
+  background: var(--gray-2);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   padding: 24px;
@@ -66,11 +68,11 @@
 }
 
 .radix-toast-root {
-  background: #fff;
+  background: var(--gray-2);
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.12);
   padding: 16px 24px;
-  color: #222;
+  color: var(--gray-12);
   font-size: 1rem;
 }
 
