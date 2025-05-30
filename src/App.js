@@ -5,7 +5,6 @@ import {
   Button, 
   TextInput, 
   Textarea, 
-  Modal, 
   Group, 
   Text, 
   Select, 
@@ -17,7 +16,6 @@ import {
   Loader,
   Alert
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { 
   IconPencil, 
@@ -26,7 +24,8 @@ import {
   IconSquare, 
   IconCircle, 
   IconTrash,
-  IconSettings 
+  IconSettings,
+  IconArrowLeft
 } from '@tabler/icons-react';
 
 function App() {
@@ -35,7 +34,6 @@ function App() {
   const [drawing, setDrawing] = useState(false);
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
-  const [configOpened, { open: openConfig, close: closeConfig }] = useDisclosure(false);
   const [token, setToken] = useState('');
   const [teamId, setTeamId] = useState('');
   const [teams, setTeams] = useState([]);
@@ -112,7 +110,7 @@ function App() {
   const saveConfig = () => {
     localStorage.setItem('linear_token', token);
     localStorage.setItem('linear_teamId', teamId);
-    closeConfig();
+    setStep('idle');
     notifications.show({
       title: 'Sucesso!',
       message: 'Configuração salva!',
@@ -469,7 +467,7 @@ function App() {
       {step === 'idle' && (
         <Stack gap="md">
           <Flex justify="flex-end" align="center">
-            <ActionIcon variant="light" onClick={openConfig} size="lg">
+            <ActionIcon variant="light" onClick={() => setStep('config')} size="lg">
               <IconSettings size={18} />
             </ActionIcon>
           </Flex>
@@ -608,9 +606,15 @@ function App() {
         </Group>
       )}
 
-      {/* Modal de configuração */}
-      <Modal opened={configOpened} onClose={closeConfig} title="Configuração do Linear" size="md">
+      {step === 'config' && (
         <Stack gap="md">
+          <Flex justify="space-between" align="center">
+            <Text size="xl" fw={600}>Configuração do Linear</Text>
+            <ActionIcon variant="light" onClick={() => setStep('idle')} size="lg" title="Voltar">
+              <IconArrowLeft size={18} />
+            </ActionIcon>
+          </Flex>
+
           <TextInput
             label="Token do Linear"
             placeholder="Token pessoal do Linear"
@@ -653,8 +657,8 @@ function App() {
             <Button onClick={saveConfig} disabled={!token || !teamId}>
               Salvar
             </Button>
-            <Button variant="light" onClick={closeConfig}>
-              Cancelar
+            <Button variant="light" onClick={() => setStep('idle')}>
+              Voltar
             </Button>
           </Group>
           
@@ -665,7 +669,7 @@ function App() {
             </Anchor>
           </Text>
         </Stack>
-      </Modal>
+      )}
     </Container>
   );
 }
