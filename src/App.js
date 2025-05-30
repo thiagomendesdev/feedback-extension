@@ -29,6 +29,8 @@ function App() {
   const [selection, setSelection] = useState(null); // {x, y, w, h}
   const [selectionStart, setSelectionStart] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
+  const [useTimer, setUseTimer] = useState(false);
+  const [countdown, setCountdown] = useState(null);
 
   // Carregar config do localStorage
   useEffect(() => {
@@ -129,7 +131,7 @@ function App() {
     });
   }, [selectedArea]);
 
-  // handleCapture só dispara a seleção
+  // handleCapture agora suporta timer
   const handleCapture = async () => {
     if (!window.chrome?.tabs) {
       alert('Só funciona como extensão Chrome!');
@@ -137,8 +139,8 @@ function App() {
     }
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (!tabs[0]?.id) return;
-      chrome.tabs.sendMessage(tabs[0].id, { type: 'START_FEEDBACK_SELECTION' }, () => {
-        window.close(); // Fecha o popup só depois de enviar a mensagem
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'START_FEEDBACK_SELECTION', timer: useTimer }, () => {
+        window.close();
       });
     });
   };
@@ -463,9 +465,22 @@ function App() {
         </Dialog.Root>
       )}
       {step === 'idle' && (
-        <button className="radix-btn" onClick={handleCapture} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CameraIcon /> Capturar tela da aba
-        </button>
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <button className="radix-btn" onClick={handleCapture} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <CameraIcon /> Capturar tela da aba
+            </button>
+            <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <input type="checkbox" checked={useTimer} onChange={e => setUseTimer(e.target.checked)} />
+              Timer 3s
+            </label>
+          </div>
+          {countdown !== null && (
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#e11d48', margin: '16px 0' }}>
+              {countdown}
+            </div>
+          )}
+        </>
       )}
       {step === 'capturing' && <p>Capturando tela...</p>}
       {step === 'draw' && image && (

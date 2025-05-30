@@ -4,8 +4,10 @@
   window.__feedback_selection_overlay = true;
 
   let overlay, selectionBox, startX, startY, endX, endY, selecting = false;
+  let timerEnabled = false;
 
-  function createOverlay() {
+  function createOverlay(opts = {}) {
+    timerEnabled = !!opts.timer;
     overlay = document.createElement('div');
     overlay.style.position = 'fixed';
     overlay.style.top = 0;
@@ -61,6 +63,42 @@
     selectionBox.style.height = h + 'px';
   }
 
+  function showTimerAndSend(x, y, w, h, areaObj) {
+    // Cria overlay do timer
+    const timerDiv = document.createElement('div');
+    timerDiv.style.position = 'fixed';
+    timerDiv.style.left = (x + w/2 - 40) + 'px';
+    timerDiv.style.top = (y + h/2 - 40) + 'px';
+    timerDiv.style.width = '80px';
+    timerDiv.style.height = '80px';
+    timerDiv.style.background = 'rgba(225,29,72,0.92)';
+    timerDiv.style.color = '#fff';
+    timerDiv.style.display = 'flex';
+    timerDiv.style.alignItems = 'center';
+    timerDiv.style.justifyContent = 'center';
+    timerDiv.style.fontSize = '2.5rem';
+    timerDiv.style.fontWeight = 'bold';
+    timerDiv.style.borderRadius = '50%';
+    timerDiv.style.zIndex = 1000000;
+    timerDiv.style.boxShadow = '0 2px 16px rgba(0,0,0,0.18)';
+    document.body.appendChild(timerDiv);
+    let count = 3;
+    timerDiv.textContent = count;
+    const interval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        timerDiv.textContent = count;
+      } else {
+        clearInterval(interval);
+        timerDiv.remove();
+        chrome.runtime.sendMessage({
+          type: 'FEEDBACK_AREA_SELECTED',
+          area: areaObj
+        });
+      }
+    }, 1000);
+  }
+
   function onMouseUp(e) {
     selecting = false;
     endX = e.clientX;
@@ -70,10 +108,15 @@
     const w = Math.abs(endX - startX);
     const h = Math.abs(endY - startY);
     removeOverlay();
-    chrome.runtime.sendMessage({
-      type: 'FEEDBACK_AREA_SELECTED',
-      area: { x, y, w, h, pageW: window.innerWidth, pageH: window.innerHeight, scrollX: window.scrollX, scrollY: window.scrollY }
-    });
+    const areaObj = { x, y, w, h, pageW: window.innerWidth, pageH: window.innerHeight, scrollX: window.scrollX, scrollY: window.scrollY };
+    if (timerEnabled) {
+      showTimerAndSend(x, y, w, h, areaObj);
+    } else {
+      chrome.runtime.sendMessage({
+        type: 'FEEDBACK_AREA_SELECTED',
+        area: areaObj
+      });
+    }
   }
 
   function onKeyDown(e) {
@@ -86,7 +129,7 @@
   // Ouve mensagem do popup para iniciar seleção
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'START_FEEDBACK_SELECTION') {
-      createOverlay();
+      createOverlay(msg);
     }
   });
 })(); 
