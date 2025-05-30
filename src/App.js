@@ -2,7 +2,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { 
   Container, 
-  Paper, 
   Button, 
   TextInput, 
   Textarea, 
@@ -42,7 +41,6 @@ function App() {
   const [teams, setTeams] = useState([]);
   const [loadingTeams, setLoadingTeams] = useState(false);
   const [teamsError, setTeamsError] = useState('');
-  const [sendWithImage, setSendWithImage] = useState(true);
   const canvasRef = useRef(null);
   const lastPoint = useRef(null);
   const [selectedArea, setSelectedArea] = useState(null);
@@ -389,16 +387,14 @@ function App() {
     
     setStep('sending');
     let finalImage = '';
-    if (sendWithImage) {
-      finalImage = await getCompressedImageDataUrl(canvasRef.current);
-    }
+    finalImage = await getCompressedImageDataUrl(canvasRef.current);
     // Coletar informações do ambiente
     const envInfo = collectFrontendEnvInfo();
     // Pegar URL da aba ativa
     function sendWithTabUrl(tabUrl) {
       envInfo.tabUrl = tabUrl;
       const description = details +
-        (sendWithImage && finalImage ? '\n\n![screenshot](' + finalImage + ')' : '') +
+        (finalImage ? '\n\n![screenshot](' + finalImage + ')' : '') +
         '\n\n---\nInformações do ambiente:\n```json\n' + JSON.stringify(envInfo, null, 2) + '\n```';
       const mutation = `
         mutation CreateIssue($input: IssueCreateInput!) {
@@ -504,7 +500,7 @@ function App() {
       )}
 
       {step === 'draw' && (
-        <Stack gap="md" style={{ minHeight: '95vh' }}>
+        <Stack gap="xs" style={{ minHeight: '95vh' }}>
           <Group justify="flex-end" align="center">
             <ActionIcon.Group>
               <ActionIcon 
@@ -545,8 +541,7 @@ function App() {
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              minHeight: '60vh',
-              padding: '1rem'
+              minHeight: '60vh'
             }}>
               <canvas
                 ref={canvasRef}
@@ -577,41 +572,32 @@ function App() {
             </div>
           )}
 
-          <Paper p="md" shadow="xs" style={{ marginTop: 'auto' }}>
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
-              <Stack gap="sm">
-                <TextInput
-                  label="Título"
-                  placeholder="Título do feedback"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.currentTarget.value)}
-                />
-                <Textarea
-                  label="Detalhes"
-                  placeholder="Descreva o problema ou sugestão"
-                  value={details}
-                  onChange={(e) => setDetails(e.currentTarget.value)}
-                  minRows={2}
-                  maxRows={3}
-                />
-                <Group justify="space-between">
-                  <Checkbox 
-                    label="Incluir screenshot no feedback" 
-                    checked={sendWithImage} 
-                    onChange={(e) => setSendWithImage(e.currentTarget.checked)}
-                  />
-                  <Button 
-                    type="submit" 
-                    leftSection={<IconSend size={16} />}
-                    size="sm"
-                  >
-                    Enviar para o Linear
-                  </Button>
-                </Group>
-              </Stack>
-            </form>
-          </Paper>
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ marginTop: 'auto' }}>
+            <Stack gap="xs">
+              <TextInput
+                placeholder="Título do feedback"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.currentTarget.value)}
+              />
+              <Textarea
+                placeholder="Descreva o problema ou sugestão"
+                value={details}
+                onChange={(e) => setDetails(e.currentTarget.value)}
+                minRows={2}
+                maxRows={3}
+              />
+              <Group justify="flex-end">
+                <Button 
+                  type="submit" 
+                  leftSection={<IconSend size={16} />}
+                  size="sm"
+                >
+                  Enviar para o Linear
+                </Button>
+              </Group>
+            </Stack>
+          </form>
         </Stack>
       )}
 
