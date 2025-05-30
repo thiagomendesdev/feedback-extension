@@ -1,10 +1,35 @@
 /* global chrome */
 import React, { useRef, useState, useEffect } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import * as Label from '@radix-ui/react-label';
-import * as Toast from '@radix-ui/react-toast';
-import { Pencil2Icon, CameraIcon, PaperPlaneIcon, SquareIcon, CircleIcon, TrashIcon } from '@radix-ui/react-icons';
-import './App.css';
+import { 
+  Container, 
+  Paper, 
+  Button, 
+  TextInput, 
+  Textarea, 
+  Modal, 
+  Group, 
+  Title, 
+  Text, 
+  Select, 
+  Checkbox, 
+  ActionIcon, 
+  Stack, 
+  Flex,
+  Anchor,
+  Loader,
+  Alert
+} from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
+import { 
+  IconPencil, 
+  IconCamera, 
+  IconSend, 
+  IconSquare, 
+  IconCircle, 
+  IconTrash,
+  IconSettings 
+} from '@tabler/icons-react';
 
 function App() {
   const [step, setStep] = useState('idle');
@@ -12,10 +37,7 @@ function App() {
   const [drawing, setDrawing] = useState(false);
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
-  const [toastError, setToastError] = useState(false);
-  const [showConfig, setShowConfig] = useState(false);
+  const [configOpened, { open: openConfig, close: closeConfig }] = useDisclosure(false);
   const [token, setToken] = useState('');
   const [teamId, setTeamId] = useState('');
   const [teams, setTeams] = useState([]);
@@ -23,14 +45,9 @@ function App() {
   const [teamsError, setTeamsError] = useState('');
   const [sendWithImage, setSendWithImage] = useState(true);
   const canvasRef = useRef(null);
-  const imgRef = useRef(null);
   const lastPoint = useRef(null);
-  const [selectingArea, setSelectingArea] = useState(false);
-  const [selection, setSelection] = useState(null); // {x, y, w, h}
-  const [selectionStart, setSelectionStart] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
   const [useTimer, setUseTimer] = useState(false);
-  const [countdown, setCountdown] = useState(null);
   const [drawMode, setDrawMode] = useState('free'); // 'free' | 'rect' | 'circle'
   const [shapes, setShapes] = useState([]); // {type, x, y, w, h}
   const [currentShape, setCurrentShape] = useState(null); // preview do shape
@@ -71,7 +88,11 @@ function App() {
             setTeamsError(data.errors[0].message || 'Erro ao buscar times');
             setTeams([]);
           } else {
-            setTeams(data.data.teams.nodes);
+            const teamsData = data.data.teams.nodes.map(team => ({
+              value: team.id,
+              label: `${team.name} (${team.key})`
+            }));
+            setTeams(teamsData);
             // Se já tem teamId salvo, mantém selecionado
             // Se não, seleciona o primeiro time
             if (!teamId && data.data.teams.nodes.length > 0) {
@@ -94,10 +115,12 @@ function App() {
   const saveConfig = () => {
     localStorage.setItem('linear_token', token);
     localStorage.setItem('linear_teamId', teamId);
-    setShowConfig(false);
-    setToastMsg('Configuração salva!');
-    setToastError(false);
-    setToastOpen(true);
+    closeConfig();
+    notifications.show({
+      title: 'Sucesso!',
+      message: 'Configuração salva!',
+      color: 'green'
+    });
   };
 
   // Ao abrir o popup, pedir ao background se há área selecionada
@@ -138,7 +161,11 @@ function App() {
   // handleCapture agora suporta timer
   const handleCapture = async () => {
     if (!window.chrome?.tabs) {
-      alert('Só funciona como extensão Chrome!');
+      notifications.show({
+        title: 'Erro',
+        message: 'Só funciona como extensão Chrome!',
+        color: 'red'
+      });
       return;
     }
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -147,50 +174,6 @@ function App() {
         window.close();
       });
     });
-  };
-
-  // Seleção de área no canvas
-  useEffect(() => {
-    if (step === 'select' && image && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      const img = new window.Image();
-      img.onload = () => {
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-      };
-      img.src = image;
-    }
-  }, [step, image]);
-
-  const handleSelectionMouseDown = (e) => {
-    const rect = e.target.getBoundingClientRect();
-    const scaleX = e.target.width / rect.width;
-    const scaleY = e.target.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    setSelectionStart({ x, y });
-    setSelection({ x, y, w: 0, h: 0 });
-    setSelectingArea(true);
-  };
-  const handleSelectionMouseMove = (e) => {
-    if (!selectingArea || !selectionStart) return;
-    const rect = e.target.getBoundingClientRect();
-    const scaleX = e.target.width / rect.width;
-    const scaleY = e.target.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    setSelection({
-      x: selectionStart.x,
-      y: selectionStart.y,
-      w: x - selectionStart.x,
-      h: y - selectionStart.y,
-    });
-  };
-  const handleSelectionMouseUp = () => {
-    setSelectingArea(false);
   };
 
   // Desenho sobre a imagem, corrigindo escala
@@ -381,23 +364,30 @@ function App() {
   // Envio real para o Linear
   const handleSend = async () => {
     if (!token || !teamId) {
-      setToastMsg('Configure o token e selecione o time do Linear!');
-      setToastError(true);
-      setToastOpen(true);
+      notifications.show({
+        title: 'Erro',
+        message: 'Configure o token e selecione o time do Linear!',
+        color: 'red'
+      });
       return;
     }
     if (!title.trim()) {
-      setToastMsg('Preencha o título!');
-      setToastError(true);
-      setToastOpen(true);
+      notifications.show({
+        title: 'Erro',
+        message: 'Preencha o título!',
+        color: 'red'
+      });
       return;
     }
     if (!/^lin_api_/.test(token)) {
-      setToastMsg('Token do Linear inválido!');
-      setToastError(true);
-      setToastOpen(true);
+      notifications.show({
+        title: 'Erro',
+        message: 'Token do Linear inválido!',
+        color: 'red'
+      });
       return;
     }
+    
     setStep('sending');
     let finalImage = '';
     if (sendWithImage) {
@@ -441,25 +431,31 @@ function App() {
         .then(res => res.json())
         .then(data => {
           if (data?.data?.issueCreate?.success) {
-            setToastMsg('Feedback enviado para o Linear!');
-            setToastError(false);
-            setToastOpen(true);
+            notifications.show({
+              title: 'Sucesso!',
+              message: 'Feedback enviado para o Linear!',
+              color: 'green'
+            });
             setStep('idle');
             setImage(null);
             setTitle('');
             setDetails('');
           } else {
             const gqlError = data.errors?.[0];
-            setToastMsg('Erro ao enviar para o Linear: ' + (gqlError?.message || 'Erro desconhecido') + (gqlError ? '\n' + JSON.stringify(gqlError, null, 2) : ''));
-            setToastError(true);
-            setToastOpen(true);
+            notifications.show({
+              title: 'Erro',
+              message: 'Erro ao enviar para o Linear: ' + (gqlError?.message || 'Erro desconhecido'),
+              color: 'red'
+            });
             setStep('draw');
           }
         })
         .catch(err => {
-          setToastMsg('Erro ao enviar para o Linear: ' + err.message);
-          setToastError(true);
-          setToastOpen(true);
+          notifications.show({
+            title: 'Erro',
+            message: 'Erro ao enviar para o Linear: ' + err.message,
+            color: 'red'
+          });
           setStep('draw');
         });
     }
@@ -474,141 +470,237 @@ function App() {
 
   // Renderização
   return (
-    <div className="App" style={{ padding: 24, minWidth: 340 }}>
+    <Container size="sm" p="md" style={{ minWidth: 340 }}>
+      {/* Debug info */}
+      <div style={{ fontSize: '10px', color: 'gray', marginBottom: '8px' }}>
+        Debug - Step: {step}, Image: {image ? 'YES' : 'NO'}
+      </div>
+
       {step === 'idle' && (
-        <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h2 style={{ margin: 0 }}>Feedback para o Linear</h2>
-            <button className="radix-btn" style={{ fontSize: 14, padding: '4px 10px' }} onClick={() => setShowConfig(true)}>
-              Config
-            </button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <button className="radix-btn" onClick={handleCapture} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <CameraIcon /> Capturar tela da aba
-            </button>
-            <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <input type="checkbox" checked={useTimer} onChange={e => setUseTimer(e.target.checked)} />
-              Timer 3s
-            </label>
-          </div>
-          {countdown !== null && (
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#e11d48', margin: '16px 0' }}>
-              {countdown}
-            </div>
-          )}
-        </>
+        <Paper p="md" shadow="sm">
+          <Flex justify="space-between" align="center" mb="md">
+            <Title order={2}>Feedback para o Linear</Title>
+            <ActionIcon variant="light" onClick={openConfig} size="lg">
+              <IconSettings size={18} />
+            </ActionIcon>
+          </Flex>
+          
+          <Stack gap="md">
+            <Group>
+              <Button 
+                leftSection={<IconCamera size={16} />} 
+                onClick={handleCapture}
+                variant="filled"
+              >
+                Capturar tela da aba
+              </Button>
+              <Checkbox 
+                label="Timer 3s" 
+                checked={useTimer} 
+                onChange={(e) => setUseTimer(e.currentTarget.checked)}
+                size="sm"
+              />
+            </Group>
+          </Stack>
+        </Paper>
       )}
-      {showConfig && (
-        <Dialog.Root open onOpenChange={setShowConfig}>
-          <Dialog.Content className="radix-dialog-content">
-            <h3>Configuração do Linear</h3>
-            <Label.Root htmlFor="token">Token do Linear</Label.Root>
-            <input
-              id="token"
-              value={token}
-              onChange={e => setToken(e.target.value)}
-              style={{ padding: 8, borderRadius: 4, border: '1px solid #e5e7eb', width: '100%' }}
-              placeholder="Token pessoal do Linear"
-            />
-            {token && !/^lin_api_/.test(token) && (
-              <p style={{ color: '#b91c1c', fontSize: 12 }}>Token inválido. Deve começar com lin_api_</p>
-            )}
-            {token && /^lin_api_/.test(token) && (
-              <div style={{ marginTop: 12 }}>
-                <Label.Root htmlFor="teamId">Selecione o time</Label.Root>
-                {loadingTeams && <p style={{ fontSize: 12 }}>Carregando times...</p>}
-                {teamsError && <p style={{ color: '#b91c1c', fontSize: 12 }}>{teamsError}</p>}
-                {!loadingTeams && !teamsError && (
-                  <select
-                    id="teamId"
-                    value={teamId}
-                    onChange={e => setTeamId(e.target.value)}
-                    style={{ padding: 8, borderRadius: 4, border: '1px solid #e5e7eb', width: '100%' }}
+
+      {step === 'capturing' && (
+        <Paper p="md" ta="center">
+          <Group justify="center">
+            <Loader size="sm" />
+            <Text>Capturando tela...</Text>
+          </Group>
+        </Paper>
+      )}
+
+      {step === 'draw' && (
+        <Paper p="md" shadow="sm" style={{ minHeight: '80vh' }}>
+          <Stack gap="md" style={{ height: '100%' }}>
+            <Group justify="space-between" align="center">
+              <Title order={3}>Editar Screenshot</Title>
+              <Group>
+                <ActionIcon.Group>
+                  <ActionIcon 
+                    variant={drawMode === 'free' ? 'filled' : 'light'}
+                    onClick={() => setDrawMode('free')}
+                    title="Desenho livre"
                   >
-                    {teams.map(team => (
-                      <option key={team.id} value={team.id}>
-                        {team.name} ({team.key})
-                      </option>
-                    ))}
-                  </select>
-                )}
+                    <IconPencil size={16} />
+                  </ActionIcon>
+                  <ActionIcon 
+                    variant={drawMode === 'rect' ? 'filled' : 'light'}
+                    onClick={() => setDrawMode('rect')}
+                    title="Retângulo"
+                  >
+                    <IconSquare size={16} />
+                  </ActionIcon>
+                  <ActionIcon 
+                    variant={drawMode === 'circle' ? 'filled' : 'light'}
+                    onClick={() => setDrawMode('circle')}
+                    title="Círculo"
+                  >
+                    <IconCircle size={16} />
+                  </ActionIcon>
+                  <ActionIcon 
+                    variant="light"
+                    onClick={handleClearDrawings}
+                    title="Limpar desenhos"
+                    color="red"
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </ActionIcon.Group>
+              </Group>
+            </Group>
+
+            {image ? (
+              <div style={{ 
+                flex: 1, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                minHeight: '300px',
+                border: '1px solid #eee',
+                borderRadius: '8px',
+                padding: '1rem'
+              }}>
+                <canvas
+                  ref={canvasRef}
+                  style={{ 
+                    border: '2px solid #e9ecef', 
+                    borderRadius: 8, 
+                    cursor: drawMode === 'free' ? 'crosshair' : 'pointer', 
+                    maxWidth: '100%', 
+                    maxHeight: '400px',
+                    display: 'block'
+                  }}
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseUp={handleCanvasMouseUp}
+                  onMouseOut={handleCanvasMouseUp}
+                  onMouseMove={handleCanvasMouseMove}
+                />
+              </div>
+            ) : (
+              <div style={{ 
+                minHeight: '300px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                border: '1px dashed #ccc',
+                borderRadius: '8px'
+              }}>
+                <Text c="dimmed">Aguardando imagem...</Text>
               </div>
             )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-              <button className="radix-btn" onClick={saveConfig} disabled={!token || !teamId}>Salvar</button>
-              <button className="radix-btn" style={{ background: '#e5e7eb', color: '#222' }} onClick={() => setShowConfig(false)}>Cancelar</button>
-            </div>
-            <p style={{ fontSize: 12, color: '#888', marginTop: 8 }}>
-              Você pode gerar um token de API em{' '}
-              <a href="https://linear.app/moises/settings/account/security/api-keys/new" target="_blank" rel="noreferrer">
-                linear.app/moises/settings/account/security/api-keys/new
-              </a>
-              .
-            </p>
-          </Dialog.Content>
-        </Dialog.Root>
+
+            <Paper p="md" shadow="xs">
+              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
+                <Stack gap="sm">
+                  <TextInput
+                    label="Título"
+                    placeholder="Título do feedback"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.currentTarget.value)}
+                  />
+                  <Textarea
+                    label="Detalhes"
+                    placeholder="Descreva o problema ou sugestão"
+                    value={details}
+                    onChange={(e) => setDetails(e.currentTarget.value)}
+                    minRows={2}
+                    maxRows={3}
+                  />
+                  <Group justify="space-between">
+                    <Checkbox 
+                      label="Incluir screenshot no feedback" 
+                      checked={sendWithImage} 
+                      onChange={(e) => setSendWithImage(e.currentTarget.checked)}
+                    />
+                    <Button 
+                      type="submit" 
+                      leftSection={<IconSend size={16} />}
+                      size="sm"
+                    >
+                      Enviar para o Linear
+                    </Button>
+                  </Group>
+                </Stack>
+              </form>
+            </Paper>
+          </Stack>
+        </Paper>
       )}
-      {step === 'capturing' && <p>Capturando tela...</p>}
-      {step === 'draw' && image && (
-        <Dialog.Root open>
-          <div style={{ position: 'relative', width: 320, margin: '0 auto', minHeight: 420 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8, marginTop: 8 }}>
-              <button type="button" className="radix-btn" style={{ background: drawMode==='free' ? '#e11d48' : '#e5e7eb', color: drawMode==='free' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('free')} title="Desenho livre"><Pencil2Icon /></button>
-              <button type="button" className="radix-btn" style={{ background: drawMode==='rect' ? '#e11d48' : '#e5e7eb', color: drawMode==='rect' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('rect')} title="Retângulo"><SquareIcon /></button>
-              <button type="button" className="radix-btn" style={{ background: drawMode==='circle' ? '#e11d48' : '#e5e7eb', color: drawMode==='circle' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('circle')} title="Círculo"><CircleIcon /></button>
-              <button type="button" className="radix-btn" style={{ background: '#e5e7eb', color: '#222', padding: 6 }} onClick={handleClearDrawings} title="Limpar desenhos"><TrashIcon /></button>
-            </div>
-            <canvas
-              ref={canvasRef}
-              style={{ border: '2px solid #e5e7eb', borderRadius: 8, cursor: drawMode==='free' ? 'crosshair' : 'pointer', maxWidth: 320, width: '100%', display: 'block', marginBottom: 12 }}
-              onMouseDown={e => handleCanvasMouseDown(e)}
-              onMouseUp={handleCanvasMouseUp}
-              onMouseOut={handleCanvasMouseUp}
-              onMouseMove={e => handleCanvasMouseMove(e)}
-            />
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                handleSend();
-              }}
-              style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 60 }}
-            >
-              <input
-                id="title"
-                required
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                style={{ padding: 8, borderRadius: 4, border: '1px solid #e5e7eb' }}
-                placeholder="Título"
-              />
-              <textarea
-                id="details"
-                value={details}
-                onChange={e => setDetails(e.target.value)}
-                style={{ padding: 8, borderRadius: 4, border: '1px solid #e5e7eb', minHeight: 60 }}
-                placeholder="Detalhes"
-              />
-            </form>
-            <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: '#fff', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)', padding: 16, zIndex: 10000, display: 'flex', justifyContent: 'center' }}>
-              <button type="button" className="radix-btn" style={{ display: 'flex', alignItems: 'center', gap: 8, width: 260, fontSize: 18, justifyContent: 'center' }} onClick={handleSend}>
-                <PaperPlaneIcon /> Enviar para o Linear
-              </button>
-            </div>
-          </div>
-        </Dialog.Root>
+
+      {step === 'sending' && (
+        <Paper p="md" ta="center">
+          <Group justify="center">
+            <Loader size="sm" />
+            <Text>Enviando feedback...</Text>
+          </Group>
+        </Paper>
       )}
-      {step === 'sending' && <p>Enviando feedback...</p>}
-      <Toast.Provider swipeDirection="right">
-        <Toast.Root className={`ToastRoot ${toastError ? 'error' : ''}`} open={toastOpen} onOpenChange={setToastOpen} duration={2000} >
-          <Toast.Title className="ToastTitle">{toastError ? 'Erro' : 'Sucesso!'}</Toast.Title>
-          <Toast.Description asChild>
-            <p>{toastMsg}</p>
-          </Toast.Description>
-        </Toast.Root>
-        <Toast.Viewport className="ToastViewport" />
-      </Toast.Provider>
-    </div>
+
+      {/* Modal de configuração */}
+      <Modal opened={configOpened} onClose={closeConfig} title="Configuração do Linear" size="md">
+        <Stack gap="md">
+          <TextInput
+            label="Token do Linear"
+            placeholder="Token pessoal do Linear"
+            value={token}
+            onChange={(e) => setToken(e.currentTarget.value)}
+          />
+          
+          {token && !/^lin_api_/.test(token) && (
+            <Alert color="red" variant="light">
+              Token inválido. Deve começar com lin_api_
+            </Alert>
+          )}
+          
+          {token && /^lin_api_/.test(token) && (
+            <Stack gap="sm">
+              <Text size="sm" fw={500}>Selecione o time</Text>
+              {loadingTeams && (
+                <Group>
+                  <Loader size="xs" />
+                  <Text size="sm">Carregando times...</Text>
+                </Group>
+              )}
+              {teamsError && (
+                <Alert color="red" variant="light">
+                  {teamsError}
+                </Alert>
+              )}
+              {!loadingTeams && !teamsError && teams.length > 0 && (
+                <Select
+                  data={teams}
+                  value={teamId}
+                  onChange={setTeamId}
+                  placeholder="Selecione um time"
+                />
+              )}
+            </Stack>
+          )}
+          
+          <Group mt="md">
+            <Button onClick={saveConfig} disabled={!token || !teamId}>
+              Salvar
+            </Button>
+            <Button variant="light" onClick={closeConfig}>
+              Cancelar
+            </Button>
+          </Group>
+          
+          <Text size="xs" c="dimmed">
+            Você pode gerar um token de API em{' '}
+            <Anchor href="https://linear.app/moises/settings/account/security/api-keys/new" target="_blank">
+              linear.app/moises/settings/account/security/api-keys/new
+            </Anchor>
+          </Text>
+        </Stack>
+      </Modal>
+    </Container>
   );
 }
 
