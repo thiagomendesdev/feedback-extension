@@ -34,6 +34,7 @@ function App() {
   const [drawMode, setDrawMode] = useState('free'); // 'free' | 'rect' | 'circle'
   const [shapes, setShapes] = useState([]); // {type, x, y, w, h}
   const [currentShape, setCurrentShape] = useState(null); // preview do shape
+  const [freeDrawings, setFreeDrawings] = useState([]); // array de paths: [{points: [{x, y}]}]
 
   // Carregar config do localStorage
   useEffect(() => {
@@ -202,6 +203,7 @@ function App() {
     if (drawMode === 'free') {
       setDrawing(true);
       lastPoint.current = { x, y };
+      setFreeDrawings(freeDrawings => [...freeDrawings, { points: [{ x, y }] }]);
     } else if (drawMode === 'rect' || drawMode === 'circle') {
       setDrawing(true);
       setCurrentShape({ type: drawMode, x, y, w: 0, h: 0 });
@@ -233,6 +235,13 @@ function App() {
       ctx.lineTo(x, y);
       ctx.stroke();
       lastPoint.current = { x, y };
+      setFreeDrawings(freeDrawings => {
+        const updated = [...freeDrawings];
+        updated[updated.length - 1] = {
+          points: [...updated[updated.length - 1].points, { x, y }]
+        };
+        return updated;
+      });
     } else if ((drawMode === 'rect' || drawMode === 'circle') && currentShape) {
       setCurrentShape({
         ...currentShape,
@@ -242,7 +251,7 @@ function App() {
     }
   };
 
-  // Redesenhar tudo ao mudar shapes, imagem ou currentShape
+  // Redesenhar tudo ao mudar shapes, imagem, currentShape ou freeDrawings
   useEffect(() => {
     if (step !== 'draw' || !image || !canvasRef.current) return;
     const canvas = canvasRef.current;
@@ -253,6 +262,21 @@ function App() {
       canvas.height = img.naturalHeight;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      // Desenho livre
+      ctx.save();
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      freeDrawings.forEach(path => {
+        if (path.points.length < 2) return;
+        ctx.beginPath();
+        ctx.moveTo(path.points[0].x, path.points[0].y);
+        for (let i = 1; i < path.points.length; i++) {
+          ctx.lineTo(path.points[i].x, path.points[i].y);
+        }
+        ctx.stroke();
+      });
+      ctx.restore();
       // shapes
       shapes.forEach(shape => {
         ctx.save();
@@ -297,13 +321,14 @@ function App() {
       }
     };
     img.src = image;
-  }, [step, image, shapes, currentShape]);
+  }, [step, image, shapes, currentShape, freeDrawings]);
 
   // Limpar desenhos
   const handleClearDrawings = () => {
     if (!canvasRef.current || !image) return;
     setShapes([]);
     setCurrentShape(null);
+    setFreeDrawings([]);
     // Redesenha só a imagem
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -450,12 +475,30 @@ function App() {
   // Renderização
   return (
     <div className="App" style={{ padding: 24, minWidth: 340 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <h2 style={{ margin: 0 }}>Feedback para o Linear</h2>
-        <button className="radix-btn" style={{ fontSize: 14, padding: '4px 10px' }} onClick={() => setShowConfig(true)}>
-          Config
-        </button>
-      </div>
+      {step === 'idle' && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <h2 style={{ margin: 0 }}>Feedback para o Linear</h2>
+            <button className="radix-btn" style={{ fontSize: 14, padding: '4px 10px' }} onClick={() => setShowConfig(true)}>
+              Config
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <button className="radix-btn" onClick={handleCapture} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <CameraIcon /> Capturar tela da aba
+            </button>
+            <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <input type="checkbox" checked={useTimer} onChange={e => setUseTimer(e.target.checked)} />
+              Timer 3s
+            </label>
+          </div>
+          {countdown !== null && (
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#e11d48', margin: '16px 0' }}>
+              {countdown}
+            </div>
+          )}
+        </>
+      )}
       {showConfig && (
         <Dialog.Root open onOpenChange={setShowConfig}>
           <Dialog.Content className="radix-dialog-content">
@@ -506,34 +549,10 @@ function App() {
           </Dialog.Content>
         </Dialog.Root>
       )}
-      {step === 'idle' && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <button className="radix-btn" onClick={handleCapture} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <CameraIcon /> Capturar tela da aba
-            </button>
-            <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <input type="checkbox" checked={useTimer} onChange={e => setUseTimer(e.target.checked)} />
-              Timer 3s
-            </label>
-          </div>
-          {countdown !== null && (
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#e11d48', margin: '16px 0' }}>
-              {countdown}
-            </div>
-          )}
-        </>
-      )}
       {step === 'capturing' && <p>Capturando tela...</p>}
       {step === 'draw' && image && (
         <Dialog.Root open>
           <Dialog.Content className="radix-dialog-content">
-            <div style={{ position: 'relative', marginBottom: 12 }}>
-              <label style={{ fontSize: 12 }}>
-                <input type="checkbox" checked={sendWithImage} onChange={e => setSendWithImage(e.target.checked)} />
-                Incluir screenshot na descrição
-              </label>
-            </div>
             <div style={{ position: 'relative', marginBottom: 16, width: 320 }}>
               {/* Barra de ferramentas de desenho */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
