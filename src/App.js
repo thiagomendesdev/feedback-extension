@@ -552,52 +552,50 @@ function App() {
       {step === 'capturing' && <p>Capturando tela...</p>}
       {step === 'draw' && image && (
         <Dialog.Root open>
-          <Dialog.Content className="radix-dialog-content">
-            <div style={{ position: 'relative', marginBottom: 16, width: 320 }}>
-              {/* Barra de ferramentas de desenho */}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <button type="button" className="radix-btn" style={{ background: drawMode==='free' ? '#e11d48' : '#e5e7eb', color: drawMode==='free' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('free')} title="Desenho livre"><Pencil2Icon /></button>
-                <button type="button" className="radix-btn" style={{ background: drawMode==='rect' ? '#e11d48' : '#e5e7eb', color: drawMode==='rect' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('rect')} title="Retângulo"><SquareIcon /></button>
-                <button type="button" className="radix-btn" style={{ background: drawMode==='circle' ? '#e11d48' : '#e5e7eb', color: drawMode==='circle' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('circle')} title="Círculo"><CircleIcon /></button>
-                <button type="button" className="radix-btn" style={{ background: '#e5e7eb', color: '#222', padding: 6 }} onClick={handleClearDrawings} title="Limpar desenhos"><TrashIcon /></button>
-              </div>
-              {/* Carrega a imagem no canvas ao abrir o modal */}
-              <canvas
-                ref={canvasRef}
-                style={{ border: '2px solid #e5e7eb', borderRadius: 8, cursor: drawMode==='free' ? 'crosshair' : 'pointer', maxWidth: 320, width: '100%', display: 'block' }}
-                onMouseDown={e => handleCanvasMouseDown(e)}
-                onMouseUp={handleCanvasMouseUp}
-                onMouseOut={handleCanvasMouseUp}
-                onMouseMove={e => handleCanvasMouseMove(e)}
-              />
+          <div style={{ position: 'relative', width: 320, margin: '0 auto', minHeight: 420 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8, marginTop: 8 }}>
+              <button type="button" className="radix-btn" style={{ background: drawMode==='free' ? '#e11d48' : '#e5e7eb', color: drawMode==='free' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('free')} title="Desenho livre"><Pencil2Icon /></button>
+              <button type="button" className="radix-btn" style={{ background: drawMode==='rect' ? '#e11d48' : '#e5e7eb', color: drawMode==='rect' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('rect')} title="Retângulo"><SquareIcon /></button>
+              <button type="button" className="radix-btn" style={{ background: drawMode==='circle' ? '#e11d48' : '#e5e7eb', color: drawMode==='circle' ? '#fff' : '#222', padding: 6 }} onClick={() => setDrawMode('circle')} title="Círculo"><CircleIcon /></button>
+              <button type="button" className="radix-btn" style={{ background: '#e5e7eb', color: '#222', padding: 6 }} onClick={handleClearDrawings} title="Limpar desenhos"><TrashIcon /></button>
             </div>
+            <canvas
+              ref={canvasRef}
+              style={{ border: '2px solid #e5e7eb', borderRadius: 8, cursor: drawMode==='free' ? 'crosshair' : 'pointer', maxWidth: 320, width: '100%', display: 'block', marginBottom: 12 }}
+              onMouseDown={e => handleCanvasMouseDown(e)}
+              onMouseUp={handleCanvasMouseUp}
+              onMouseOut={handleCanvasMouseUp}
+              onMouseMove={e => handleCanvasMouseMove(e)}
+            />
             <form
               onSubmit={e => {
                 e.preventDefault();
                 handleSend();
               }}
-              style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 60 }}
             >
-              <Label.Root htmlFor="title">Título</Label.Root>
               <input
                 id="title"
                 required
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 style={{ padding: 8, borderRadius: 4, border: '1px solid #e5e7eb' }}
+                placeholder="Título"
               />
-              <Label.Root htmlFor="details">Detalhes</Label.Root>
               <textarea
                 id="details"
                 value={details}
                 onChange={e => setDetails(e.target.value)}
                 style={{ padding: 8, borderRadius: 4, border: '1px solid #e5e7eb', minHeight: 60 }}
+                placeholder="Detalhes"
               />
-              <button type="submit" className="radix-btn" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+            </form>
+            <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: '#fff', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)', padding: 16, zIndex: 10000, display: 'flex', justifyContent: 'center' }}>
+              <button type="button" className="radix-btn" style={{ display: 'flex', alignItems: 'center', gap: 8, width: 260, fontSize: 18, justifyContent: 'center' }} onClick={handleSend}>
                 <PaperPlaneIcon /> Enviar para o Linear
               </button>
-            </form>
-          </Dialog.Content>
+            </div>
+          </div>
         </Dialog.Root>
       )}
       {step === 'sending' && <p>Enviando feedback...</p>}
