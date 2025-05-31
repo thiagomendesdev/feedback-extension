@@ -547,7 +547,7 @@ function App() {
 
   // Renderização
   return (
-    <Container size="xl" p="sm" style={{ minWidth: 860, maxWidth: 860 }}>
+    <Container size="xl" p="sm" style={{ minWidth: 960, maxWidth: 960 }}>
       {step === 'idle' && (
         <Stack gap="md">
           <Flex justify="flex-end" align="center">
@@ -582,107 +582,122 @@ function App() {
       )}
 
       {step === 'draw' && (
-        <Stack gap="sm" style={{ minHeight: '620px' }}>
-          <Group justify="flex-end" align="center">
-            <ActionIcon.Group>
-              <ActionIcon 
-                variant={drawMode === 'free' ? 'filled' : 'light'}
-                onClick={() => setDrawMode('free')}
-                title="Desenho livre"
-              >
-                <IconPencil size={16} />
-              </ActionIcon>
-              <ActionIcon 
-                variant={drawMode === 'rect' ? 'filled' : 'light'}
-                onClick={() => setDrawMode('rect')}
-                title="Retângulo"
-              >
-                <IconSquare size={16} />
-              </ActionIcon>
-              <ActionIcon 
-                variant={drawMode === 'circle' ? 'filled' : 'light'}
-                onClick={() => setDrawMode('circle')}
-                title="Círculo"
-              >
-                <IconCircle size={16} />
-              </ActionIcon>
-              <ActionIcon 
-                variant="light"
-                onClick={handleClearDrawings}
-                title="Limpar desenhos"
-                color="red"
-              >
-                <IconTrash size={16} />
-              </ActionIcon>
-            </ActionIcon.Group>
-          </Group>
+        <div style={{ minHeight: '620px', display: 'flex', gap: '16px' }}>
+          {/* Left side - Canvas and drawing tools */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Group justify="flex-end" align="center">
+              <ActionIcon.Group>
+                <ActionIcon 
+                  variant={drawMode === 'free' ? 'filled' : 'light'}
+                  onClick={() => setDrawMode('free')}
+                  title="Desenho livre"
+                >
+                  <IconPencil size={16} />
+                </ActionIcon>
+                <ActionIcon 
+                  variant={drawMode === 'rect' ? 'filled' : 'light'}
+                  onClick={() => setDrawMode('rect')}
+                  title="Retângulo"
+                >
+                  <IconSquare size={16} />
+                </ActionIcon>
+                <ActionIcon 
+                  variant={drawMode === 'circle' ? 'filled' : 'light'}
+                  onClick={() => setDrawMode('circle')}
+                  title="Círculo"
+                >
+                  <IconCircle size={16} />
+                </ActionIcon>
+                <ActionIcon 
+                  variant="light"
+                  onClick={handleClearDrawings}
+                  title="Limpar desenhos"
+                  color="red"
+                >
+                  <IconTrash size={16} />
+                </ActionIcon>
+              </ActionIcon.Group>
+            </Group>
 
-          {image ? (
-            <div style={{ 
-              flex: 1, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              minHeight: '400px'
-            }}>
-              <canvas
-                ref={canvasRef}
-                style={{ 
-                  border: '2px solid #e9ecef', 
-                  borderRadius: 8, 
-                  cursor: drawMode === 'free' ? 'crosshair' : 'pointer', 
-                  maxWidth: '100%', 
-                  maxHeight: '400px',
-                  display: 'block'
-                }}
-                onMouseDown={handleCanvasMouseDown}
-                onMouseUp={handleCanvasMouseUp}
-                onMouseOut={handleCanvasMouseUp}
-                onMouseMove={handleCanvasMouseMove}
-              />
-            </div>
-          ) : (
-            <div style={{ 
-              minHeight: '400px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              border: '1px dashed #ccc',
-              borderRadius: '8px'
-            }}>
-              <Text c="dimmed">Aguardando imagem...</Text>
-            </div>
-          )}
+            {image ? (
+              <div style={{ 
+                flex: 1, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                minHeight: '500px'
+              }}>
+                <canvas
+                  ref={canvasRef}
+                  style={{ 
+                    border: '2px solid #e9ecef', 
+                    borderRadius: 8, 
+                    cursor: drawMode === 'free' ? 'crosshair' : 'pointer', 
+                    maxWidth: '100%', 
+                    maxHeight: '500px',
+                    display: 'block'
+                  }}
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseUp={handleCanvasMouseUp}
+                  onMouseOut={handleCanvasMouseUp}
+                  onMouseMove={handleCanvasMouseMove}
+                />
+              </div>
+            ) : (
+              <div style={{ 
+                minHeight: '500px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                border: '1px dashed #ccc',
+                borderRadius: '8px'
+              }}>
+                <Text c="dimmed">Aguardando imagem...</Text>
+              </div>
+            )}
+          </div>
 
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ marginTop: 'auto' }}>
-            <Stack gap="sm">
-              <TextInput
-                placeholder="Título do feedback"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.currentTarget.value)}
-                size="sm"
-              />
-              <Textarea
-                placeholder="Descreva o problema ou sugestão"
-                value={details}
-                onChange={(e) => setDetails(e.currentTarget.value)}
-                minRows={2}
-                maxRows={3}
-                size="sm"
-              />
-              <Group justify="flex-end">
+          {/* Right side - Form */}
+          <div style={{ width: '300px', display: 'flex', flexDirection: 'column' }}>
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Stack gap="md" style={{ flex: 1 }}>
+                <div>
+                  <Text size="lg" fw={600} mb="md">Feedback</Text>
+                </div>
+                
+                <TextInput
+                  label="Título"
+                  placeholder="Título do feedback"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.currentTarget.value)}
+                  size="sm"
+                />
+                
+                <Textarea
+                  label="Descrição"
+                  placeholder="Descreva o problema ou sugestão"
+                  value={details}
+                  onChange={(e) => setDetails(e.currentTarget.value)}
+                  minRows={8}
+                  maxRows={12}
+                  size="sm"
+                  style={{ flex: 1 }}
+                />
+                
                 <Button 
                   type="submit" 
                   leftSection={<IconSend size={16} />}
-                  size="sm"
+                  size="md"
+                  fullWidth
+                  style={{ marginTop: 'auto' }}
                 >
                   Enviar para o Linear
                 </Button>
-              </Group>
-            </Stack>
-          </form>
-        </Stack>
+              </Stack>
+            </form>
+          </div>
+        </div>
       )}
 
       {step === 'sending' && (

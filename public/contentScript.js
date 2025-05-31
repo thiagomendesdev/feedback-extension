@@ -244,6 +244,9 @@
   }
 
   function showTimerAndSend(x, y, w, h, areaObj) {
+    // Remove overlay first to avoid capturing it
+    removeOverlay();
+    
     // Recorte da área selecionada (apenas mask, sem darkOverlay)
     const mask = document.createElement('div');
     mask.style.position = 'fixed';
@@ -284,12 +287,17 @@
         timerDiv.textContent = count;
       } else {
         clearInterval(interval);
+        // Remove timer and mask before capture
         timerDiv.remove();
         mask.remove();
-        chrome.runtime.sendMessage({
-          type: 'FEEDBACK_AREA_SELECTED',
-          area: areaObj
-        });
+        
+        // Small delay to ensure elements are removed
+        setTimeout(() => {
+          chrome.runtime.sendMessage({
+            type: 'FEEDBACK_AREA_SELECTED',
+            area: areaObj
+          });
+        }, 50);
       }
     }, 1000);
   }
@@ -315,16 +323,21 @@
       h = Math.abs(endY - startY);
     }
     
-    removeOverlay();
     const areaObj = { x, y, w, h, pageW: window.innerWidth, pageH: window.innerHeight, scrollX: window.scrollX, scrollY: window.scrollY };
     
     if (timerEnabled) {
       showTimerAndSend(x, y, w, h, areaObj);
     } else {
-      chrome.runtime.sendMessage({
-        type: 'FEEDBACK_AREA_SELECTED',
-        area: areaObj
-      });
+      // Remove overlay and control panel BEFORE sending capture message
+      removeOverlay();
+      
+      // Small delay to ensure overlay is removed before capture
+      setTimeout(() => {
+        chrome.runtime.sendMessage({
+          type: 'FEEDBACK_AREA_SELECTED',
+          area: areaObj
+        });
+      }, 100);
     }
   }
 
@@ -371,7 +384,7 @@
       editOverlay.style.justifyContent = 'center';
 
       const modal = document.createElement('div');
-      modal.style.width = '900px';
+      modal.style.width = '1000px'; // Increased width by 100px
       modal.style.height = '700px';
       modal.style.background = '#fff';
       modal.style.borderRadius = '12px';
