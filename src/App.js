@@ -667,21 +667,16 @@ function App() {
           <div style={{ 
             flex: 1, 
             display: 'flex', 
-            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center',
             position: 'relative',
             background: '#f8f9fa', // Mantine gray.1
             borderRadius: '12px',
-            padding: '16px'
+            padding: '16px',
+            overflow: 'hidden'
           }}>
             {image ? (
-              <div style={{ 
-                flex: 1, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                overflow: 'hidden',
-                position: 'relative'
-              }}>
+              <>
                 <canvas
                   ref={canvasRef}
                   style={{ 
@@ -771,15 +766,16 @@ function App() {
                     <IconTrash size={16} />
                   </ActionIcon>
                 </div>
-              </div>
+              </>
             ) : (
               <div style={{ 
-                flex: 1,
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
                 border: '1px dashed #ccc',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                width: '100%',
+                height: '200px'
               }}>
                 <Text c="dimmed">Waiting for image...</Text>
               </div>
