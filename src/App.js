@@ -80,7 +80,7 @@ function App() {
         .then(res => res.json())
         .then(data => {
           if (data.errors) {
-            setTeamsError(data.errors[0].message || 'Erro ao buscar times');
+            setTeamsError(data.errors[0].message || 'Error fetching teams');
             setTeams([]);
           } else {
             const teamsData = data.data.teams.nodes.map(team => ({
@@ -96,7 +96,7 @@ function App() {
           }
         })
         .catch(err => {
-          setTeamsError('Erro ao buscar times: ' + err.message);
+          setTeamsError('Error fetching teams: ' + err.message);
           setTeams([]);
         })
         .finally(() => setLoadingTeams(false));
@@ -112,8 +112,8 @@ function App() {
     localStorage.setItem('linear_teamId', teamId);
     setStep('idle');
     notifications.show({
-      title: 'Sucesso!',
-      message: 'Configuração salva!',
+      title: 'Success!',
+      message: 'Configuration saved!',
       color: 'green'
     });
     
@@ -234,8 +234,8 @@ function App() {
   const handleCapture = async () => {
     if (!window.chrome?.tabs) {
       notifications.show({
-        title: 'Erro',
-        message: 'Só funciona como extensão Chrome!',
+        title: 'Error',
+        message: 'Only works as Chrome extension!',
         color: 'red'
       });
       return;
@@ -437,24 +437,24 @@ function App() {
   const handleSend = async () => {
     if (!token || !teamId) {
       notifications.show({
-        title: 'Erro',
-        message: 'Configure o token e selecione o time do Linear!',
+        title: 'Error',
+        message: 'Configure the Linear token and select a team!',
         color: 'red'
       });
       return;
     }
     if (!title.trim()) {
       notifications.show({
-        title: 'Erro',
-        message: 'Preencha o título!',
+        title: 'Error',
+        message: 'Please fill in the title!',
         color: 'red'
       });
       return;
     }
     if (!/^lin_api_/.test(token)) {
       notifications.show({
-        title: 'Erro',
-        message: 'Token do Linear inválido!',
+        title: 'Error',
+        message: 'Invalid Linear token!',
         color: 'red'
       });
       return;
@@ -470,7 +470,7 @@ function App() {
       envInfo.tabUrl = tabUrl;
       const description = details +
         (finalImage ? '\n\n![screenshot](' + finalImage + ')' : '') +
-        '\n\n---\nInformações do ambiente:\n```json\n' + JSON.stringify(envInfo, null, 2) + '\n```';
+        '\n\n---\nEnvironment Info:\n```json\n' + JSON.stringify(envInfo, null, 2) + '\n```';
       const mutation = `
         mutation CreateIssue($input: IssueCreateInput!) {
           issueCreate(input: $input) {
@@ -502,8 +502,8 @@ function App() {
         .then(data => {
           if (data?.data?.issueCreate?.success) {
             notifications.show({
-              title: 'Sucesso!',
-              message: 'Feedback enviado para o Linear!',
+              title: 'Success!',
+              message: 'Feedback sent to Linear!',
               color: 'green'
             });
             setStep('idle');
@@ -520,8 +520,8 @@ function App() {
           } else {
             const gqlError = data.errors?.[0];
             notifications.show({
-              title: 'Erro',
-              message: 'Erro ao enviar para o Linear: ' + (gqlError?.message || 'Erro desconhecido'),
+              title: 'Error',
+              message: 'Error sending to Linear: ' + (gqlError?.message || 'Unknown error'),
               color: 'red'
             });
             setStep('draw');
@@ -529,8 +529,8 @@ function App() {
         })
         .catch(err => {
           notifications.show({
-            title: 'Erro',
-            message: 'Erro ao enviar para o Linear: ' + err.message,
+            title: 'Error',
+            message: 'Error sending to Linear: ' + err.message,
             color: 'red'
           });
           setStep('draw');
@@ -547,42 +547,44 @@ function App() {
 
   // Renderização
   return (
-    <Container size="xl" p="sm" style={{ minWidth: 960, maxWidth: 960 }}>
+    <Container size="xl" p={0} style={{ minWidth: 1000, maxWidth: 1000, height: '100vh' }}>
       {step === 'idle' && (
-        <Stack gap="md">
-          <Flex justify="flex-end" align="center">
-            <ActionIcon variant="light" onClick={() => setStep('config')} size="lg">
-              <IconSettings size={18} />
-            </ActionIcon>
-          </Flex>
-          
-          <Group>
-            <Button 
-              leftSection={<IconCamera size={16} />} 
-              onClick={handleCapture}
-              variant="filled"
-            >
-              Capturar tela da aba
-            </Button>
-            <Checkbox 
-              label="Timer 3s" 
-              checked={useTimer} 
-              onChange={(e) => setUseTimer(e.currentTarget.checked)}
-              size="sm"
-            />
-          </Group>
-        </Stack>
+        <div style={{ padding: '16px' }}>
+          <Stack gap="md">
+            <Flex justify="flex-end" align="center">
+              <ActionIcon variant="light" onClick={() => setStep('config')} size="lg">
+                <IconSettings size={18} />
+              </ActionIcon>
+            </Flex>
+            
+            <Group>
+              <Button 
+                leftSection={<IconCamera size={16} />} 
+                onClick={handleCapture}
+                variant="filled"
+              >
+                Capture tab screen
+              </Button>
+              <Checkbox 
+                label="3s Timer" 
+                checked={useTimer} 
+                onChange={(e) => setUseTimer(e.currentTarget.checked)}
+                size="sm"
+              />
+            </Group>
+          </Stack>
+        </div>
       )}
 
       {step === 'capturing' && (
         <Group justify="center" style={{ minHeight: '200px', alignItems: 'center' }}>
           <Loader size="sm" />
-          <Text>Capturando tela...</Text>
+          <Text>Capturing screen...</Text>
         </Group>
       )}
 
       {step === 'draw' && (
-        <div style={{ minHeight: '620px', display: 'flex', gap: '16px' }}>
+        <div style={{ height: '100vh', display: 'flex', gap: '32px', padding: '16px' }}>
           {/* Left side - Canvas and drawing tools */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <Group justify="flex-end" align="center">
@@ -590,28 +592,28 @@ function App() {
                 <ActionIcon 
                   variant={drawMode === 'free' ? 'filled' : 'light'}
                   onClick={() => setDrawMode('free')}
-                  title="Desenho livre"
+                  title="Free drawing"
                 >
                   <IconPencil size={16} />
                 </ActionIcon>
                 <ActionIcon 
                   variant={drawMode === 'rect' ? 'filled' : 'light'}
                   onClick={() => setDrawMode('rect')}
-                  title="Retângulo"
+                  title="Rectangle"
                 >
                   <IconSquare size={16} />
                 </ActionIcon>
                 <ActionIcon 
                   variant={drawMode === 'circle' ? 'filled' : 'light'}
                   onClick={() => setDrawMode('circle')}
-                  title="Círculo"
+                  title="Circle"
                 >
                   <IconCircle size={16} />
                 </ActionIcon>
                 <ActionIcon 
                   variant="light"
                   onClick={handleClearDrawings}
-                  title="Limpar desenhos"
+                  title="Clear drawings"
                   color="red"
                 >
                   <IconTrash size={16} />
@@ -624,8 +626,7 @@ function App() {
                 flex: 1, 
                 display: 'flex', 
                 alignItems: 'center', 
-                justifyContent: 'center', 
-                minHeight: '500px'
+                justifyContent: 'center'
               }}>
                 <canvas
                   ref={canvasRef}
@@ -634,7 +635,7 @@ function App() {
                     borderRadius: 8, 
                     cursor: drawMode === 'free' ? 'crosshair' : 'pointer', 
                     maxWidth: '100%', 
-                    maxHeight: '500px',
+                    maxHeight: '100%',
                     display: 'block'
                   }}
                   onMouseDown={handleCanvasMouseDown}
@@ -645,14 +646,14 @@ function App() {
               </div>
             ) : (
               <div style={{ 
-                minHeight: '500px', 
+                flex: 1,
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
                 border: '1px dashed #ccc',
                 borderRadius: '8px'
               }}>
-                <Text c="dimmed">Aguardando imagem...</Text>
+                <Text c="dimmed">Waiting for image...</Text>
               </div>
             )}
           </div>
@@ -666,8 +667,8 @@ function App() {
                 </div>
                 
                 <TextInput
-                  label="Título"
-                  placeholder="Título do feedback"
+                  label="Title"
+                  placeholder="Feedback title"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.currentTarget.value)}
@@ -675,8 +676,8 @@ function App() {
                 />
                 
                 <Textarea
-                  label="Descrição"
-                  placeholder="Descreva o problema ou sugestão"
+                  label="Description"
+                  placeholder="Describe the issue or suggestion"
                   value={details}
                   onChange={(e) => setDetails(e.currentTarget.value)}
                   minRows={8}
@@ -692,7 +693,7 @@ function App() {
                   fullWidth
                   style={{ marginTop: 'auto' }}
                 >
-                  Enviar para o Linear
+                  Send to Linear
                 </Button>
               </Stack>
             </form>
@@ -703,73 +704,77 @@ function App() {
       {step === 'sending' && (
         <Group justify="center" style={{ minHeight: '200px', alignItems: 'center' }}>
           <Loader size="sm" />
-          <Text>Enviando feedback...</Text>
+          <Text>Sending feedback...</Text>
         </Group>
       )}
 
       {step === 'config' && (
-        <Stack gap="md">
-          <Flex justify="space-between" align="center">
-            <Text size="xl" fw={600}>Configuração do Linear</Text>
-            <ActionIcon variant="light" onClick={() => setStep('idle')} size="lg" title="Voltar">
-              <IconArrowLeft size={18} />
-            </ActionIcon>
-          </Flex>
+        <div style={{ padding: '16px', height: '100vh', overflow: 'auto' }}>
+          <Stack gap="md" style={{ maxWidth: '400px' }}>
+            <Flex justify="space-between" align="center">
+              <Text size="xl" fw={600}>Linear Configuration</Text>
+              <ActionIcon variant="light" onClick={() => setStep('idle')} size="lg" title="Back">
+                <IconArrowLeft size={18} />
+              </ActionIcon>
+            </Flex>
 
-          <TextInput
-            label="Token do Linear"
-            placeholder="Token pessoal do Linear"
-            value={token}
-            onChange={(e) => setToken(e.currentTarget.value)}
-          />
-          
-          {token && !/^lin_api_/.test(token) && (
-            <Alert color="red" variant="light">
-              Token inválido. Deve começar com lin_api_
-            </Alert>
-          )}
-          
-          {token && /^lin_api_/.test(token) && (
-            <Stack gap="sm">
-              <Text size="sm" fw={500}>Selecione o time</Text>
-              {loadingTeams && (
-                <Group>
-                  <Loader size="xs" />
-                  <Text size="sm">Carregando times...</Text>
-                </Group>
-              )}
-              {teamsError && (
-                <Alert color="red" variant="light">
-                  {teamsError}
-                </Alert>
-              )}
-              {!loadingTeams && !teamsError && teams.length > 0 && (
-                <Select
-                  data={teams}
-                  value={teamId}
-                  onChange={setTeamId}
-                  placeholder="Selecione um time"
-                />
-              )}
-            </Stack>
-          )}
-          
-          <Group mt="md">
-            <Button onClick={saveConfig} disabled={!token || !teamId}>
-              Salvar
-            </Button>
-            <Button variant="light" onClick={() => setStep('idle')}>
-              Voltar
-            </Button>
-          </Group>
-          
-          <Text size="xs" c="dimmed">
-            Você pode gerar um token de API em{' '}
-            <Anchor href="https://linear.app/moises/settings/account/security/api-keys/new" target="_blank">
-              linear.app/moises/settings/account/security/api-keys/new
-            </Anchor>
-          </Text>
-        </Stack>
+            <TextInput
+              label="Linear Token"
+              placeholder="Personal Linear token"
+              value={token}
+              onChange={(e) => setToken(e.currentTarget.value)}
+              size="sm"
+            />
+            
+            {token && !/^lin_api_/.test(token) && (
+              <Alert color="red" variant="light" size="sm">
+                Invalid token. Must start with lin_api_
+              </Alert>
+            )}
+            
+            {token && /^lin_api_/.test(token) && (
+              <Stack gap="sm">
+                <Text size="sm" fw={500}>Select team</Text>
+                {loadingTeams && (
+                  <Group>
+                    <Loader size="xs" />
+                    <Text size="sm">Loading teams...</Text>
+                  </Group>
+                )}
+                {teamsError && (
+                  <Alert color="red" variant="light" size="sm">
+                    {teamsError}
+                  </Alert>
+                )}
+                {!loadingTeams && !teamsError && teams.length > 0 && (
+                  <Select
+                    data={teams}
+                    value={teamId}
+                    onChange={setTeamId}
+                    placeholder="Select a team"
+                    size="sm"
+                  />
+                )}
+              </Stack>
+            )}
+            
+            <Group mt="md">
+              <Button onClick={saveConfig} disabled={!token || !teamId} size="sm">
+                Save
+              </Button>
+              <Button variant="light" onClick={() => setStep('idle')} size="sm">
+                Back
+              </Button>
+            </Group>
+            
+            <Text size="xs" c="dimmed">
+              You can generate an API token at{' '}
+              <Anchor href="https://linear.app/moises/settings/account/security/api-keys/new" target="_blank">
+                linear.app/moises/settings/account/security/api-keys/new
+              </Anchor>
+            </Text>
+          </Stack>
+        </div>
       )}
     </Container>
   );

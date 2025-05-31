@@ -50,7 +50,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       pointer-events: auto;
     `;
-    configBtn.title = 'Configurações';
+    configBtn.title = 'Settings';
     configBtn.addEventListener('mouseover', () => {
       configBtn.style.background = 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)';
       configBtn.style.transform = 'translateY(-1px)';
@@ -89,7 +89,7 @@
       box-shadow: 0 1px 3px rgba(59,130,246,0.2);
       pointer-events: auto;
     `;
-    timerBtn.title = 'Capturar com timer de 3 segundos';
+    timerBtn.title = 'Capture with 3 second timer';
     timerBtn.addEventListener('mouseover', () => {
       timerBtn.style.background = 'linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)';
       timerBtn.style.transform = 'translateY(-1px)';
@@ -127,7 +127,7 @@
       box-shadow: 0 1px 3px rgba(239,68,68,0.2);
       pointer-events: auto;
     `;
-    closeBtn.title = 'Cancelar seleção (ESC)';
+    closeBtn.title = 'Cancel selection (ESC)';
     closeBtn.addEventListener('mouseover', () => {
       closeBtn.style.background = 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)';
       closeBtn.style.transform = 'translateY(-1px)';
@@ -171,7 +171,7 @@
 
     // Tooltip
     tooltipDiv = document.createElement('div');
-    tooltipDiv.textContent = 'Arraste para selecionar área ou clique para capturar tela inteira';
+    tooltipDiv.innerHTML = 'Drag to area.<br>Click to full window.<br>Esc to cancel.';
     tooltipDiv.style.position = 'fixed';
     tooltipDiv.style.background = 'rgba(34,34,34,0.95)';
     tooltipDiv.style.color = '#fff';
