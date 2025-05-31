@@ -664,7 +664,15 @@ function App() {
       {step === 'draw' && (
         <div style={{ height: '100vh', display: 'flex', gap: '32px', padding: '24px' }}>
           {/* Left side - Canvas area */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div style={{ 
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            position: 'relative',
+            background: '#f8f9fa', // Mantine gray.1
+            borderRadius: '12px',
+            padding: '16px'
+          }}>
             {image ? (
               <div style={{ 
                 flex: 1, 
