@@ -28,45 +28,19 @@
     controlPanel.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     controlPanel.style.pointerEvents = 'none'; // Don't interfere with area selection
     
-    // Config button
-    const configBtn = document.createElement('button');
-    configBtn.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-        <circle cx="12" cy="12" r="3"></circle>
-      </svg>
-    `;
-    configBtn.style.cssText = `
-      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-      border: 1px solid rgba(0,0,0,0.1);
-      cursor: pointer;
-      padding: 8px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #374151;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      pointer-events: auto;
-    `;
-    configBtn.title = 'Settings';
-    configBtn.addEventListener('mouseover', () => {
-      configBtn.style.background = 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)';
-      configBtn.style.transform = 'translateY(-1px)';
-      configBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+    // Hide tooltip when hovering control panel
+    controlPanel.addEventListener('mouseenter', () => {
+      if (tooltipDiv) {
+        tooltipDiv.style.display = 'none';
+      }
     });
-    configBtn.addEventListener('mouseout', () => {
-      configBtn.style.background = 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)';
-      configBtn.style.transform = 'translateY(0)';
-      configBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-    });
-    configBtn.addEventListener('click', () => {
-      removeOverlay();
-      chrome.runtime.sendMessage({ type: 'OPEN_CONFIG' });
+    controlPanel.addEventListener('mouseleave', () => {
+      if (tooltipDiv) {
+        tooltipDiv.style.display = 'block';
+      }
     });
     
-    // 3 seconds timer button
+    // 3 seconds timer button (moved to first position)
     const timerBtn = document.createElement('button');
     timerBtn.innerHTML = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -85,28 +59,114 @@
       align-items: center;
       justify-content: center;
       color: #1d4ed8;
-      transition: all 0.2s ease;
+      transition: all 0.1s ease;
       box-shadow: 0 1px 3px rgba(59,130,246,0.2);
       pointer-events: auto;
+      position: relative;
     `;
-    timerBtn.title = 'Capture with 3 second timer';
-    timerBtn.addEventListener('mouseover', () => {
+    
+    // Create Mantine-style tooltip for timer button
+    const timerTooltip = document.createElement('div');
+    timerTooltip.textContent = 'Capture with 3 second timer';
+    timerTooltip.style.cssText = `
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #212529;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+      z-index: 1000003;
+    `;
+    timerBtn.appendChild(timerTooltip);
+    
+    timerBtn.addEventListener('mouseenter', () => {
       timerBtn.style.background = 'linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)';
       timerBtn.style.transform = 'translateY(-1px)';
       timerBtn.style.boxShadow = '0 2px 8px rgba(59,130,246,0.3)';
+      timerTooltip.style.opacity = '1';
     });
-    timerBtn.addEventListener('mouseout', () => {
+    timerBtn.addEventListener('mouseleave', () => {
       timerBtn.style.background = 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)';
       timerBtn.style.transform = 'translateY(0)';
       timerBtn.style.boxShadow = '0 1px 3px rgba(59,130,246,0.2)';
+      timerTooltip.style.opacity = '0';
     });
     timerBtn.addEventListener('click', () => {
       removeOverlay();
       chrome.runtime.sendMessage({ type: 'START_FEEDBACK_SELECTION_WITH_TIMER' });
     });
     
-    controlPanel.appendChild(configBtn);
+    // Config button (moved to second position)
+    const configBtn = document.createElement('button');
+    configBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    `;
+    configBtn.style.cssText = `
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      border: 1px solid rgba(0,0,0,0.1);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #374151;
+      transition: all 0.1s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      pointer-events: auto;
+      position: relative;
+    `;
+    
+    // Create Mantine-style tooltip for config button
+    const configTooltip = document.createElement('div');
+    configTooltip.textContent = 'Settings';
+    configTooltip.style.cssText = `
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #212529;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+      z-index: 1000003;
+    `;
+    configBtn.appendChild(configTooltip);
+    
+    configBtn.addEventListener('mouseenter', () => {
+      configBtn.style.background = 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)';
+      configBtn.style.transform = 'translateY(-1px)';
+      configBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+      configTooltip.style.opacity = '1';
+    });
+    configBtn.addEventListener('mouseleave', () => {
+      configBtn.style.background = 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)';
+      configBtn.style.transform = 'translateY(0)';
+      configBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      configTooltip.style.opacity = '0';
+    });
+    configBtn.addEventListener('click', () => {
+      removeOverlay();
+      chrome.runtime.sendMessage({ type: 'OPEN_CONFIG' });
+    });
+    
     controlPanel.appendChild(timerBtn);
+    controlPanel.appendChild(configBtn);
     document.body.appendChild(controlPanel);
   }
 

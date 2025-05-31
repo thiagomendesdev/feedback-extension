@@ -24,8 +24,7 @@ import {
   IconSquare, 
   IconCircle, 
   IconTrash,
-  IconSettings,
-  IconArrowLeft
+  IconSettings
 } from '@tabler/icons-react';
 
 function App() {
@@ -43,7 +42,7 @@ function App() {
   const lastPoint = useRef(null);
   const [selectedArea, setSelectedArea] = useState(null);
   const [useTimer, setUseTimer] = useState(false);
-  const [drawMode, setDrawMode] = useState('free'); // 'free' | 'rect' | 'circle'
+  const [drawMode, setDrawMode] = useState('free'); // 'free' | 'rect' | 'circle' | 'line' | 'arrow'
   const [shapes, setShapes] = useState([]); // {type, x, y, w, h}
   const [currentShape, setCurrentShape] = useState(null); // preview do shape
   const [freeDrawings, setFreeDrawings] = useState([]); // array de paths: [{points: [{x, y}]}]
@@ -259,7 +258,7 @@ function App() {
       setDrawing(true);
       lastPoint.current = { x, y };
       setFreeDrawings(freeDrawings => [...freeDrawings, { points: [{ x, y }] }]);
-    } else if (drawMode === 'rect' || drawMode === 'circle') {
+    } else if (['rect', 'circle', 'line', 'arrow'].includes(drawMode)) {
       setDrawing(true);
       setCurrentShape({ type: drawMode, x, y, w: 0, h: 0 });
     }
@@ -267,7 +266,7 @@ function App() {
   const handleCanvasMouseUp = () => {
     if (drawMode === 'free') {
       setDrawing(false);
-    } else if ((drawMode === 'rect' || drawMode === 'circle') && currentShape) {
+    } else if (['rect', 'circle', 'line', 'arrow'].includes(drawMode) && currentShape) {
       setDrawing(false);
       setShapes([...shapes, currentShape]);
       setCurrentShape(null);
@@ -297,7 +296,7 @@ function App() {
         };
         return updated;
       });
-    } else if ((drawMode === 'rect' || drawMode === 'circle') && currentShape) {
+    } else if (['rect', 'circle', 'line', 'arrow'].includes(drawMode) && currentShape) {
       setCurrentShape({
         ...currentShape,
         w: x - currentShape.x,
@@ -363,6 +362,33 @@ function App() {
             0, 0, 2 * Math.PI
           );
           ctx.stroke();
+        } else if (shape.type === 'line') {
+          ctx.beginPath();
+          ctx.moveTo(shape.x, shape.y);
+          ctx.lineTo(shape.x + shape.w, shape.y + shape.h);
+          ctx.stroke();
+        } else if (shape.type === 'arrow') {
+          // Draw line
+          ctx.beginPath();
+          ctx.moveTo(shape.x, shape.y);
+          ctx.lineTo(shape.x + shape.w, shape.y + shape.h);
+          ctx.stroke();
+          
+          // Draw arrowhead
+          const angle = Math.atan2(shape.h, shape.w);
+          const headlen = 15; // Arrow head length
+          ctx.beginPath();
+          ctx.moveTo(shape.x + shape.w, shape.y + shape.h);
+          ctx.lineTo(
+            shape.x + shape.w - headlen * Math.cos(angle - Math.PI / 6),
+            shape.y + shape.h - headlen * Math.sin(angle - Math.PI / 6)
+          );
+          ctx.moveTo(shape.x + shape.w, shape.y + shape.h);
+          ctx.lineTo(
+            shape.x + shape.w - headlen * Math.cos(angle + Math.PI / 6),
+            shape.y + shape.h - headlen * Math.sin(angle + Math.PI / 6)
+          );
+          ctx.stroke();
         }
         ctx.restore();
       });
@@ -382,6 +408,33 @@ function App() {
             Math.abs(currentShape.w / 2),
             Math.abs(currentShape.h / 2),
             0, 0, 2 * Math.PI
+          );
+          ctx.stroke();
+        } else if (currentShape.type === 'line') {
+          ctx.beginPath();
+          ctx.moveTo(currentShape.x, currentShape.y);
+          ctx.lineTo(currentShape.x + currentShape.w, currentShape.y + currentShape.h);
+          ctx.stroke();
+        } else if (currentShape.type === 'arrow') {
+          // Draw line
+          ctx.beginPath();
+          ctx.moveTo(currentShape.x, currentShape.y);
+          ctx.lineTo(currentShape.x + currentShape.w, currentShape.y + currentShape.h);
+          ctx.stroke();
+          
+          // Draw arrowhead
+          const angle = Math.atan2(currentShape.h, currentShape.w);
+          const headlen = 15; // Arrow head length
+          ctx.beginPath();
+          ctx.moveTo(currentShape.x + currentShape.w, currentShape.y + currentShape.h);
+          ctx.lineTo(
+            currentShape.x + currentShape.w - headlen * Math.cos(angle - Math.PI / 6),
+            currentShape.y + currentShape.h - headlen * Math.sin(angle - Math.PI / 6)
+          );
+          ctx.moveTo(currentShape.x + currentShape.w, currentShape.y + currentShape.h);
+          ctx.lineTo(
+            currentShape.x + currentShape.w - headlen * Math.cos(angle + Math.PI / 6),
+            currentShape.y + currentShape.h - headlen * Math.sin(angle + Math.PI / 6)
           );
           ctx.stroke();
         }
@@ -574,7 +627,7 @@ function App() {
   return (
     <Container size="xl" p={0} style={{ minWidth: 1000, maxWidth: 1000, height: '100vh' }}>
       {step === 'idle' && (
-        <div style={{ padding: '16px' }}>
+        <div style={{ padding: '24px' }}>
           <Stack gap="md">
             <Flex justify="flex-end" align="center">
               <ActionIcon variant="light" onClick={() => setStep('config')} size="lg">
@@ -609,43 +662,9 @@ function App() {
       )}
 
       {step === 'draw' && (
-        <div style={{ height: '100vh', display: 'flex', gap: '32px', padding: '16px' }}>
-          {/* Left side - Canvas and drawing tools */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <Group justify="flex-end" align="center">
-              <ActionIcon.Group>
-                <ActionIcon 
-                  variant={drawMode === 'free' ? 'filled' : 'light'}
-                  onClick={() => setDrawMode('free')}
-                  title="Free drawing"
-                >
-                  <IconPencil size={16} />
-                </ActionIcon>
-                <ActionIcon 
-                  variant={drawMode === 'rect' ? 'filled' : 'light'}
-                  onClick={() => setDrawMode('rect')}
-                  title="Rectangle"
-                >
-                  <IconSquare size={16} />
-                </ActionIcon>
-                <ActionIcon 
-                  variant={drawMode === 'circle' ? 'filled' : 'light'}
-                  onClick={() => setDrawMode('circle')}
-                  title="Circle"
-                >
-                  <IconCircle size={16} />
-                </ActionIcon>
-                <ActionIcon 
-                  variant="light"
-                  onClick={handleClearDrawings}
-                  title="Clear drawings"
-                  color="red"
-                >
-                  <IconTrash size={16} />
-                </ActionIcon>
-              </ActionIcon.Group>
-            </Group>
-
+        <div style={{ height: '100vh', display: 'flex', gap: '32px', padding: '24px' }}>
+          {/* Left side - Canvas area */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
             {image ? (
               <div style={{ 
                 flex: 1, 
@@ -653,7 +672,7 @@ function App() {
                 alignItems: 'center', 
                 justifyContent: 'center',
                 overflow: 'hidden',
-                maxHeight: 'calc(100vh - 120px)' // Account for padding and controls
+                position: 'relative'
               }}>
                 <canvas
                   ref={canvasRef}
@@ -664,13 +683,86 @@ function App() {
                     maxWidth: '100%', 
                     maxHeight: '100%',
                     display: 'block',
-                    objectFit: 'contain' // Ensure image scales proportionally
+                    objectFit: 'contain'
                   }}
                   onMouseDown={handleCanvasMouseDown}
                   onMouseUp={handleCanvasMouseUp}
                   onMouseOut={handleCanvasMouseUp}
                   onMouseMove={handleCanvasMouseMove}
                 />
+                
+                {/* Floating drawing tools */}
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    display: drawing ? 'none' : 'flex',
+                    gap: '8px',
+                    background: 'rgba(255, 255, 255, 0.98)',
+                    backdropFilter: 'blur(12px)',
+                    borderRadius: '8px',
+                    padding: '8px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    zIndex: 10
+                  }}
+                >
+                  <ActionIcon 
+                    variant={drawMode === 'free' ? 'filled' : 'light'}
+                    onClick={() => setDrawMode('free')}
+                    title="Free drawing"
+                    size="sm"
+                  >
+                    <IconPencil size={16} />
+                  </ActionIcon>
+                  <ActionIcon 
+                    variant={drawMode === 'line' ? 'filled' : 'light'}
+                    onClick={() => setDrawMode('line')}
+                    title="Line"
+                    size="sm"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="7" y1="17" x2="17" y2="7"></line>
+                    </svg>
+                  </ActionIcon>
+                  <ActionIcon 
+                    variant={drawMode === 'arrow' ? 'filled' : 'light'}
+                    onClick={() => setDrawMode('arrow')}
+                    title="Arrow"
+                    size="sm"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="7" y1="17" x2="17" y2="7"></line>
+                      <polyline points="7,7 17,7 17,17"></polyline>
+                    </svg>
+                  </ActionIcon>
+                  <ActionIcon 
+                    variant={drawMode === 'rect' ? 'filled' : 'light'}
+                    onClick={() => setDrawMode('rect')}
+                    title="Rectangle"
+                    size="sm"
+                  >
+                    <IconSquare size={16} />
+                  </ActionIcon>
+                  <ActionIcon 
+                    variant={drawMode === 'circle' ? 'filled' : 'light'}
+                    onClick={() => setDrawMode('circle')}
+                    title="Circle"
+                    size="sm"
+                  >
+                    <IconCircle size={16} />
+                  </ActionIcon>
+                  <ActionIcon 
+                    variant="light"
+                    onClick={handleClearDrawings}
+                    title="Clear drawings"
+                    color="red"
+                    size="sm"
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </div>
               </div>
             ) : (
               <div style={{ 
@@ -737,14 +829,11 @@ function App() {
       )}
 
       {step === 'config' && (
-        <div style={{ padding: '16px', height: '100vh', overflow: 'auto' }}>
+        <div style={{ padding: '24px', height: '100vh', overflow: 'auto' }}>
           <Stack gap="md" style={{ maxWidth: '400px' }}>
-            <Flex justify="space-between" align="center">
+            <div>
               <Text size="xl" fw={600}>Linear Configuration</Text>
-              <ActionIcon variant="light" onClick={() => setStep('idle')} size="lg" title="Back">
-                <IconArrowLeft size={18} />
-              </ActionIcon>
-            </Flex>
+            </div>
 
             <TextInput
               label="Linear Token"
@@ -789,9 +878,6 @@ function App() {
             <Group mt="md">
               <Button onClick={saveConfig} disabled={!token || !teamId} size="sm">
                 Save
-              </Button>
-              <Button variant="light" onClick={() => setStep('idle')} size="sm">
-                Back
               </Button>
             </Group>
             
