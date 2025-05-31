@@ -179,6 +179,7 @@
     selectionBox.style.position = 'absolute';
     selectionBox.style.border = '2px dashed #e11d48';
     selectionBox.style.background = 'rgba(225,29,72,0.08)';
+    selectionBox.style.borderRadius = '4px';
     overlay.appendChild(selectionBox);
 
     // Tooltip

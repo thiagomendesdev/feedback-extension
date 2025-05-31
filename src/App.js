@@ -665,7 +665,7 @@ function App() {
       )}
 
       {step === 'draw' && (
-        <div style={{ height: '100vh', display: 'flex', gap: '32px', background: '#f8f9fa' }}>
+        <div style={{ height: '100vh', display: 'flex', background: '#f8f9fa' }}>
           {/* Left side - Canvas area */}
           <div style={{ 
             flex: 1, 
@@ -702,9 +702,9 @@ function App() {
                   style={{
                     position: 'absolute',
                     top: '16px',
-                    right: '16px',
+                    left: '16px',
                     display: drawing ? 'none' : 'flex',
-                    gap: '4px',
+                    gap: '2px',
                     background: 'rgba(255, 255, 255, 0.98)',
                     backdropFilter: 'blur(12px)',
                     borderRadius: '12px',
@@ -798,7 +798,7 @@ function App() {
 
           {/* Right side - Form */}
           <div style={{ 
-            width: '300px', 
+            width: '340px', 
             display: 'flex', 
             flexDirection: 'column',
             background: '#fff',
@@ -807,10 +807,6 @@ function App() {
           }}>
             <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Stack gap="md" style={{ flex: 1 }}>
-                <div>
-                  <Text size="lg" fw={600} mb="md">Feedback</Text>
-                </div>
-                
                 <TextInput
                   label="Title"
                   placeholder="Feedback title"
@@ -860,7 +856,7 @@ function App() {
         <div style={{ padding: '24px', height: '100vh', overflow: 'auto' }}>
           <Stack gap="md" style={{ maxWidth: '400px' }}>
             <div>
-              <Text size="xl" fw={600}>Linear Configuration</Text>
+              <Text size="xl" fw={600}>Settings</Text>
             </div>
 
             <TextInput
@@ -908,6 +904,24 @@ function App() {
             <Group mt="md">
               <Button onClick={saveConfig} disabled={!token || !teamId} size="md" radius="md">
                 Save
+              </Button>
+              <Button 
+                onClick={() => {
+                  setToken('');
+                  setTeamId('');
+                  localStorage.removeItem('linear_token');
+                  localStorage.removeItem('linear_teamId');
+                  notifications.show({
+                    title: 'Settings cleared',
+                    message: 'All settings have been reset',
+                    color: 'blue'
+                  });
+                }} 
+                variant="light" 
+                size="md" 
+                radius="md"
+              >
+                Reset
               </Button>
             </Group>
             
