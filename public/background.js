@@ -9,14 +9,18 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'FEEDBACK_AREA_SELECTED') {
     lastArea = msg.area;
-    chrome.runtime.sendMessage({ type: 'FEEDBACK_AREA_READY', area: lastArea });
-    // Open popup window after area is selected
-    chrome.windows.create({
-      url: 'index.html',
-      type: 'popup',
-      width: 400,
-      height: 600,
-      focused: true
+    // Capture the full screen and send to content script for processing
+    chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
+      // Send full screenshot and area data to content script
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) {
+          chrome.tabs.sendMessage(tabs[0].id, { 
+            type: 'SHOW_EDIT_OVERLAY', 
+            area: lastArea,
+            fullScreenshot: dataUrl
+          });
+        }
+      });
     });
   } else if (msg.type === 'FEEDBACK_AREA_CANCEL') {
     lastArea = null;
@@ -31,22 +35,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
     });
   } else if (msg.type === 'OPEN_CONFIG') {
-    // Open config popup window
-    shouldOpenConfig = true;
-    chrome.windows.create({
-      url: 'index.html',
-      type: 'popup',
-      width: 400,
-      height: 600,
-      focused: true
-    }).then(() => {
-      // Send message to the popup to open config
-      setTimeout(() => {
-        chrome.runtime.sendMessage({ type: 'OPEN_CONFIG' });
-        shouldOpenConfig = false;
-      }, 500);
-    }).catch(() => {
-      shouldOpenConfig = false;
+    // Send message to content script to show config overlay
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'SHOW_CONFIG_OVERLAY' });
+      }
     });
   } else if (msg.type === 'CHECK_SHOULD_OPEN_CONFIG') {
     sendResponse({ shouldOpenConfig });

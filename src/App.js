@@ -116,40 +116,97 @@ function App() {
       message: 'Configuração salva!',
       color: 'green'
     });
+    
+    // Close the overlay if we're in iframe mode
+    setTimeout(() => {
+      if (window.parent !== window) {
+        window.parent.postMessage('closeFeedbackOverlay', '*');
+      }
+    }, 1500);
   };
 
   // Ao abrir o popup, pedir ao background se há área selecionada
   useEffect(() => {
-    chrome.runtime.sendMessage({ type: 'GET_FEEDBACK_AREA' }, (res) => {
-      if (res && res.area) {
-        setSelectedArea(res.area);
-      }
-    });
+    // Check URL parameters first (for iframe mode)
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
 
-    // Check if we should open config immediately
-    chrome.runtime.sendMessage({ type: 'CHECK_SHOULD_OPEN_CONFIG' }, (res) => {
-      if (res && res.shouldOpenConfig) {
-        setStep('config');
+    if (mode === 'edit') {
+      // We're in edit mode via iframe
+      setStep('capturing'); // Show loading state
+      
+      // Listen for data from parent window
+      const handleMessage = (event) => {
+        if (event.data.type === 'feedbackData') {
+          setSelectedArea(event.data.areaData);
+          setImage(event.data.imageData);
+          setStep('draw');
+        }
+      };
+      
+      window.addEventListener('message', handleMessage);
+      
+      // Signal that iframe is ready
+      if (window.parent !== window) {
+        window.parent.postMessage('iframeReady', '*');
       }
-    });
+      
+      return () => {
+        window.removeEventListener('message', handleMessage);
+      };
+    } else if (mode === 'config') {
+      // We're in config mode via iframe
+      setStep('config');
+    } else {
+      // Fallback to original logic for non-iframe usage
+      // Check if we have area data from the overlay
+      if (window.parent.__feedbackAreaData) {
+        setSelectedArea(window.parent.__feedbackAreaData);
+      } else {
+        // Fallback to background script check
+        chrome.runtime.sendMessage({ type: 'GET_FEEDBACK_AREA' }, (res) => {
+          if (res && res.area) {
+            setSelectedArea(res.area);
+          }
+        });
+      }
+
+      // Check if we should open config immediately
+      if (window.parent.__feedbackConfigMode) {
+        setStep('config');
+      } else {
+        chrome.runtime.sendMessage({ type: 'CHECK_SHOULD_OPEN_CONFIG' }, (res) => {
+          if (res && res.shouldOpenConfig) {
+            setStep('config');
+          }
+        });
+      }
+    }
 
     // Listen for config opening request
-    const handleMessage = (msg) => {
+    const handleConfigMessage = (msg) => {
       if (msg.type === 'OPEN_CONFIG') {
         setStep('config');
       }
     };
 
-    chrome.runtime.onMessage.addListener(handleMessage);
+    chrome.runtime.onMessage.addListener(handleConfigMessage);
     
     return () => {
-      chrome.runtime.onMessage.removeListener(handleMessage);
+      chrome.runtime.onMessage.removeListener(handleConfigMessage);
     };
   }, []);
 
-  // Quando selectedArea mudar, capturar tela e recortar
+  // Quando selectedArea mudar, capturar tela e recortar (only for non-iframe mode)
   useEffect(() => {
     if (!selectedArea) return;
+    
+    // Skip capture if we're in iframe mode (image already provided)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mode') === 'edit') {
+      return; // Image is already set above
+    }
+    
     setStep('capturing');
     chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
       const img = new window.Image();
@@ -453,6 +510,13 @@ function App() {
             setImage(null);
             setTitle('');
             setDetails('');
+            
+            // Close the overlay if we're in iframe mode
+            setTimeout(() => {
+              if (window.parent !== window) {
+                window.parent.postMessage('closeFeedbackOverlay', '*');
+              }
+            }, 1500);
           } else {
             const gqlError = data.errors?.[0];
             notifications.show({
@@ -483,7 +547,7 @@ function App() {
 
   // Renderização
   return (
-    <Container size="sm" p="md" style={{ minWidth: 340 }}>
+    <Container size="xl" p="sm" style={{ minWidth: 860, maxWidth: 860 }}>
       {step === 'idle' && (
         <Stack gap="md">
           <Flex justify="flex-end" align="center">
@@ -518,7 +582,7 @@ function App() {
       )}
 
       {step === 'draw' && (
-        <Stack gap="xs" style={{ minHeight: '95vh' }}>
+        <Stack gap="sm" style={{ minHeight: '620px' }}>
           <Group justify="flex-end" align="center">
             <ActionIcon.Group>
               <ActionIcon 
@@ -559,7 +623,7 @@ function App() {
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              minHeight: '60vh'
+              minHeight: '400px'
             }}>
               <canvas
                 ref={canvasRef}
@@ -568,7 +632,7 @@ function App() {
                   borderRadius: 8, 
                   cursor: drawMode === 'free' ? 'crosshair' : 'pointer', 
                   maxWidth: '100%', 
-                  maxHeight: '60vh',
+                  maxHeight: '400px',
                   display: 'block'
                 }}
                 onMouseDown={handleCanvasMouseDown}
@@ -579,7 +643,7 @@ function App() {
             </div>
           ) : (
             <div style={{ 
-              minHeight: '60vh', 
+              minHeight: '400px', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
@@ -591,12 +655,13 @@ function App() {
           )}
 
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ marginTop: 'auto' }}>
-            <Stack gap="xs">
+            <Stack gap="sm">
               <TextInput
                 placeholder="Título do feedback"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.currentTarget.value)}
+                size="sm"
               />
               <Textarea
                 placeholder="Descreva o problema ou sugestão"
@@ -604,6 +669,7 @@ function App() {
                 onChange={(e) => setDetails(e.currentTarget.value)}
                 minRows={2}
                 maxRows={3}
+                size="sm"
               />
               <Group justify="flex-end">
                 <Button 

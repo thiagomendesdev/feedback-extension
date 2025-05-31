@@ -8,6 +8,8 @@
   let tooltipDiv = null;
   let dragStarted = false; // Nova variável para detectar se houve arraste
   let controlPanel = null; // Panel with control buttons
+  let editOverlay = null; // Edit overlay iframe
+  let configOverlay = null; // Config overlay iframe
 
   function createControlPanel() {
     controlPanel = document.createElement('div');
@@ -333,10 +335,208 @@
     }
   }
 
+  function createEditOverlay(areaData, fullScreenshot) {
+    if (editOverlay) return; // Prevent multiple overlays
+    
+    // First crop the image
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      const scaleX = img.naturalWidth / areaData.pageW;
+      const scaleY = img.naturalHeight / areaData.pageH;
+      const sx = Math.round(areaData.x * scaleX);
+      const sy = Math.round(areaData.y * scaleY);
+      const sw = Math.round(areaData.w * scaleX);
+      const sh = Math.round(areaData.h * scaleY);
+      
+      canvas.width = sw;
+      canvas.height = sh;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+      
+      const croppedDataUrl = canvas.toDataURL('image/png');
+      
+      // Create the overlay
+      editOverlay = document.createElement('div');
+      editOverlay.style.position = 'fixed';
+      editOverlay.style.top = '0';
+      editOverlay.style.left = '0';
+      editOverlay.style.width = '100vw';
+      editOverlay.style.height = '100vh';
+      editOverlay.style.background = 'rgba(0, 0, 0, 0.8)';
+      editOverlay.style.zIndex = 2000000;
+      editOverlay.style.display = 'flex';
+      editOverlay.style.alignItems = 'center';
+      editOverlay.style.justifyContent = 'center';
+
+      const modal = document.createElement('div');
+      modal.style.width = '900px';
+      modal.style.height = '700px';
+      modal.style.background = '#fff';
+      modal.style.borderRadius = '12px';
+      modal.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.3)';
+      modal.style.position = 'relative';
+      modal.style.overflow = 'hidden';
+
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '×';
+      closeBtn.style.position = 'absolute';
+      closeBtn.style.top = '8px';
+      closeBtn.style.right = '8px';
+      closeBtn.style.width = '32px';
+      closeBtn.style.height = '32px';
+      closeBtn.style.border = 'none';
+      closeBtn.style.background = 'rgba(0, 0, 0, 0.1)';
+      closeBtn.style.borderRadius = '50%';
+      closeBtn.style.cursor = 'pointer';
+      closeBtn.style.fontSize = '20px';
+      closeBtn.style.zIndex = 10;
+      closeBtn.style.display = 'flex';
+      closeBtn.style.alignItems = 'center';
+      closeBtn.style.justifyContent = 'center';
+      closeBtn.addEventListener('click', removeEditOverlay);
+
+      const iframe = document.createElement('iframe');
+      // Pass mode via URL parameter
+      const params = new URLSearchParams({
+        mode: 'edit'
+      });
+      iframe.src = chrome.runtime.getURL('index.html') + '?' + params.toString();
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '12px';
+
+      // Listen for iframe ready message and send data
+      window.addEventListener('message', function(event) {
+        if (event.data === 'iframeReady') {
+          // Send the image data to iframe
+          iframe.contentWindow.postMessage({
+            type: 'feedbackData',
+            areaData: areaData,
+            imageData: croppedDataUrl
+          }, '*');
+        } else if (event.data === 'closeFeedbackOverlay') {
+          removeEditOverlay();
+        }
+      });
+
+      modal.appendChild(closeBtn);
+      modal.appendChild(iframe);
+      editOverlay.appendChild(modal);
+      document.body.appendChild(editOverlay);
+
+      // Close on background click
+      editOverlay.addEventListener('click', (e) => {
+        if (e.target === editOverlay) {
+          removeEditOverlay();
+        }
+      });
+    };
+    
+    img.src = fullScreenshot;
+  }
+
+  function removeEditOverlay() {
+    if (editOverlay) {
+      editOverlay.remove();
+      editOverlay = null;
+    }
+  }
+
+  function createConfigOverlay() {
+    if (configOverlay) return; // Prevent multiple overlays
+    
+    configOverlay = document.createElement('div');
+    configOverlay.style.position = 'fixed';
+    configOverlay.style.top = '0';
+    configOverlay.style.left = '0';
+    configOverlay.style.width = '100vw';
+    configOverlay.style.height = '100vh';
+    configOverlay.style.background = 'rgba(0, 0, 0, 0.8)';
+    configOverlay.style.zIndex = 2000000;
+    configOverlay.style.display = 'flex';
+    configOverlay.style.alignItems = 'center';
+    configOverlay.style.justifyContent = 'center';
+
+    const modal = document.createElement('div');
+    modal.style.width = '450px';
+    modal.style.height = '600px';
+    modal.style.background = '#fff';
+    modal.style.borderRadius = '12px';
+    modal.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.3)';
+    modal.style.position = 'relative';
+    modal.style.overflow = 'hidden';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '×';
+    closeBtn.style.position = 'absolute';
+    closeBtn.style.top = '8px';
+    closeBtn.style.right = '8px';
+    closeBtn.style.width = '32px';
+    closeBtn.style.height = '32px';
+    closeBtn.style.border = 'none';
+    closeBtn.style.background = 'rgba(0, 0, 0, 0.1)';
+    closeBtn.style.borderRadius = '50%';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.zIndex = 10;
+    closeBtn.style.display = 'flex';
+    closeBtn.style.alignItems = 'center';
+    closeBtn.style.justifyContent = 'center';
+    closeBtn.addEventListener('click', removeConfigOverlay);
+
+    const iframe = document.createElement('iframe');
+    // Set config mode via URL parameter
+    const params = new URLSearchParams({
+      mode: 'config'
+    });
+    iframe.src = chrome.runtime.getURL('index.html') + '?' + params.toString();
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '12px';
+
+    // Set flag for config mode
+    window.__feedbackConfigMode = true;
+
+    modal.appendChild(closeBtn);
+    modal.appendChild(iframe);
+    configOverlay.appendChild(modal);
+    document.body.appendChild(configOverlay);
+
+    // Close on background click
+    configOverlay.addEventListener('click', (e) => {
+      if (e.target === configOverlay) {
+        removeConfigOverlay();
+      }
+    });
+
+    // Listen for close message from iframe
+    window.addEventListener('message', function(event) {
+      if (event.data === 'closeFeedbackOverlay') {
+        removeConfigOverlay();
+      }
+    });
+  }
+
+  function removeConfigOverlay() {
+    if (configOverlay) {
+      configOverlay.remove();
+      configOverlay = null;
+      window.__feedbackConfigMode = false;
+    }
+  }
+
   // Ouve mensagem do popup para iniciar seleção
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'START_FEEDBACK_SELECTION') {
       createOverlay(msg);
+    } else if (msg.type === 'SHOW_EDIT_OVERLAY') {
+      createEditOverlay(msg.area, msg.fullScreenshot);
+    } else if (msg.type === 'SHOW_CONFIG_OVERLAY') {
+      createConfigOverlay();
     }
   });
 })(); 
