@@ -125,6 +125,26 @@ function App() {
         setSelectedArea(res.area);
       }
     });
+
+    // Check if we should open config immediately
+    chrome.runtime.sendMessage({ type: 'CHECK_SHOULD_OPEN_CONFIG' }, (res) => {
+      if (res && res.shouldOpenConfig) {
+        setStep('config');
+      }
+    });
+
+    // Listen for config opening request
+    const handleMessage = (msg) => {
+      if (msg.type === 'OPEN_CONFIG') {
+        setStep('config');
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleMessage);
+    
+    return () => {
+      chrome.runtime.onMessage.removeListener(handleMessage);
+    };
   }, []);
 
   // Quando selectedArea mudar, capturar tela e recortar

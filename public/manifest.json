@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "description": "Capture, desenhe e envie feedbacks para o Linear.",
   "action": {
-    "default_popup": "index.html",
     "default_icon": {
       "16": "favicon.ico",
       "32": "logo192.png",
