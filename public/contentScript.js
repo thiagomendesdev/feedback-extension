@@ -21,7 +21,7 @@
     controlPanel.style.gap = '8px';
     controlPanel.style.background = 'rgba(255, 255, 255, 0.98)';
     controlPanel.style.backdropFilter = 'blur(12px)';
-    controlPanel.style.borderRadius = '8px';
+    controlPanel.style.borderRadius = '12px'; // increased radius
     controlPanel.style.padding = '8px';
     controlPanel.style.boxShadow = '0 4px 20px rgba(0,0,0,0.12)';
     controlPanel.style.border = '1px solid rgba(0,0,0,0.08)';
@@ -40,27 +40,26 @@
       }
     });
     
-    // 3 seconds timer button (moved to first position)
+    // 3 seconds timer button (ActionIcon style, icon only)
     const timerBtn = document.createElement('button');
     timerBtn.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"></circle>
         <polyline points="12,6 12,12 16,14"></polyline>
       </svg>
-      <span style="margin-left: 3px; font-size: 10px; font-weight: 600;">3s</span>
     `;
     timerBtn.style.cssText = `
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      border: 1px solid #3b82f6;
+      background: transparent;
+      border: none;
       cursor: pointer;
-      padding: 8px 10px;
+      width: 28px;
+      height: 28px;
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #1d4ed8;
+      color: #495057;
       transition: all 0.1s ease;
-      box-shadow: 0 1px 3px rgba(59,130,246,0.2);
       pointer-events: auto;
       position: relative;
     `;
@@ -87,15 +86,11 @@
     timerBtn.appendChild(timerTooltip);
     
     timerBtn.addEventListener('mouseenter', () => {
-      timerBtn.style.background = 'linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)';
-      timerBtn.style.transform = 'translateY(-1px)';
-      timerBtn.style.boxShadow = '0 2px 8px rgba(59,130,246,0.3)';
+      timerBtn.style.background = 'rgba(134, 142, 150, 0.35)'; // subtle variant hover
       timerTooltip.style.opacity = '1';
     });
     timerBtn.addEventListener('mouseleave', () => {
-      timerBtn.style.background = 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)';
-      timerBtn.style.transform = 'translateY(0)';
-      timerBtn.style.boxShadow = '0 1px 3px rgba(59,130,246,0.2)';
+      timerBtn.style.background = 'transparent';
       timerTooltip.style.opacity = '0';
     });
     timerBtn.addEventListener('click', () => {
@@ -103,26 +98,26 @@
       chrome.runtime.sendMessage({ type: 'START_FEEDBACK_SELECTION_WITH_TIMER' });
     });
     
-    // Config button (moved to second position)
+    // Config button (ActionIcon style)
     const configBtn = document.createElement('button');
     configBtn.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
         <circle cx="12" cy="12" r="3"></circle>
       </svg>
     `;
     configBtn.style.cssText = `
-      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-      border: 1px solid rgba(0,0,0,0.1);
+      background: transparent;
+      border: none;
       cursor: pointer;
-      padding: 8px;
+      width: 28px;
+      height: 28px;
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #374151;
+      color: #495057;
       transition: all 0.1s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       pointer-events: auto;
       position: relative;
     `;
@@ -149,15 +144,11 @@
     configBtn.appendChild(configTooltip);
     
     configBtn.addEventListener('mouseenter', () => {
-      configBtn.style.background = 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)';
-      configBtn.style.transform = 'translateY(-1px)';
-      configBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+      configBtn.style.background = 'rgba(134, 142, 150, 0.35)'; // subtle variant hover
       configTooltip.style.opacity = '1';
     });
     configBtn.addEventListener('mouseleave', () => {
-      configBtn.style.background = 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)';
-      configBtn.style.transform = 'translateY(0)';
-      configBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      configBtn.style.background = 'transparent';
       configTooltip.style.opacity = '0';
     });
     configBtn.addEventListener('click', () => {
@@ -235,9 +226,12 @@
     selectionBox.style.width = '0px';
     selectionBox.style.height = '0px';
     
-    // Hide control panel when starting selection
+    // Hide control panel and tooltip when starting selection
     if (controlPanel) {
       controlPanel.style.display = 'none';
+    }
+    if (tooltipDiv) {
+      tooltipDiv.style.display = 'none';
     }
   }
 
@@ -396,44 +390,62 @@
       
       const croppedDataUrl = canvas.toDataURL('image/png');
       
-      // Create the overlay
+      // Create the overlay with lighter background like Mantine Spotlight
       editOverlay = document.createElement('div');
       editOverlay.style.position = 'fixed';
       editOverlay.style.top = '0';
       editOverlay.style.left = '0';
       editOverlay.style.width = '100vw';
       editOverlay.style.height = '100vh';
-      editOverlay.style.background = 'rgba(0, 0, 0, 0.8)';
+      editOverlay.style.background = 'rgba(0, 0, 0, 0.4)';
+      editOverlay.style.backdropFilter = 'blur(8px)';
+      editOverlay.style.WebkitBackdropFilter = 'blur(8px)'; // Safari support
       editOverlay.style.zIndex = 2000000;
       editOverlay.style.display = 'flex';
       editOverlay.style.alignItems = 'center';
       editOverlay.style.justifyContent = 'center';
 
       const modal = document.createElement('div');
-      modal.style.width = '1000px'; // Increased width by 100px
+      modal.style.width = '1000px';
       modal.style.height = '700px';
       modal.style.background = '#fff';
-      modal.style.borderRadius = '12px';
-      modal.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.3)';
+      modal.style.borderRadius = '16px'; // increased radius
+      modal.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.15)'; // reduced shadow
       modal.style.position = 'relative';
       modal.style.overflow = 'hidden';
 
       const closeBtn = document.createElement('button');
-      closeBtn.innerHTML = '×';
+      closeBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      `;
       closeBtn.style.position = 'absolute';
-      closeBtn.style.top = '8px';
-      closeBtn.style.right = '8px';
-      closeBtn.style.width = '32px';
-      closeBtn.style.height = '32px';
+      closeBtn.style.top = '12px';
+      closeBtn.style.right = '12px';
+      closeBtn.style.width = '28px';
+      closeBtn.style.height = '28px';
       closeBtn.style.border = 'none';
-      closeBtn.style.background = 'rgba(0, 0, 0, 0.1)';
-      closeBtn.style.borderRadius = '50%';
+      closeBtn.style.background = 'transparent';
+      closeBtn.style.borderRadius = '6px'; // md radius
       closeBtn.style.cursor = 'pointer';
-      closeBtn.style.fontSize = '20px';
+      closeBtn.style.fontSize = '16px';
       closeBtn.style.zIndex = 10;
       closeBtn.style.display = 'flex';
       closeBtn.style.alignItems = 'center';
       closeBtn.style.justifyContent = 'center';
+      closeBtn.style.color = '#495057';
+      closeBtn.style.transition = 'all 0.15s ease';
+      closeBtn.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      
+      // Hover effects for close button (ActionIcon subtle style)
+      closeBtn.addEventListener('mouseenter', () => {
+        closeBtn.style.background = 'rgba(134, 142, 150, 0.35)';
+      });
+      closeBtn.addEventListener('mouseleave', () => {
+        closeBtn.style.background = 'transparent';
+      });
       closeBtn.addEventListener('click', removeEditOverlay);
 
       const iframe = document.createElement('iframe');
@@ -445,7 +457,18 @@
       iframe.style.width = '100%';
       iframe.style.height = '100%';
       iframe.style.border = 'none';
-      iframe.style.borderRadius = '12px';
+      iframe.style.borderRadius = '16px';
+
+      // ESC key functionality
+      const handleEscKey = (e) => {
+        if (e.key === 'Escape') {
+          removeEditOverlay();
+        }
+      };
+      document.addEventListener('keydown', handleEscKey);
+      
+      // Store the handler for cleanup
+      editOverlay._escHandler = handleEscKey;
 
       // Listen for iframe ready message and send data
       window.addEventListener('message', function(event) {
@@ -479,6 +502,10 @@
 
   function removeEditOverlay() {
     if (editOverlay) {
+      // Remove ESC key listener
+      if (editOverlay._escHandler) {
+        document.removeEventListener('keydown', editOverlay._escHandler);
+      }
       editOverlay.remove();
       editOverlay = null;
     }
@@ -487,13 +514,16 @@
   function createConfigOverlay() {
     if (configOverlay) return; // Prevent multiple overlays
     
+    // Create overlay with lighter background like Mantine Spotlight
     configOverlay = document.createElement('div');
     configOverlay.style.position = 'fixed';
     configOverlay.style.top = '0';
     configOverlay.style.left = '0';
     configOverlay.style.width = '100vw';
     configOverlay.style.height = '100vh';
-    configOverlay.style.background = 'rgba(0, 0, 0, 0.8)';
+    configOverlay.style.background = 'rgba(0, 0, 0, 0.4)';
+    configOverlay.style.backdropFilter = 'blur(8px)';
+    configOverlay.style.WebkitBackdropFilter = 'blur(8px)'; // Safari support
     configOverlay.style.zIndex = 2000000;
     configOverlay.style.display = 'flex';
     configOverlay.style.alignItems = 'center';
@@ -503,27 +533,43 @@
     modal.style.width = '450px';
     modal.style.height = '600px';
     modal.style.background = '#fff';
-    modal.style.borderRadius = '12px';
-    modal.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.3)';
+    modal.style.borderRadius = '16px'; // increased radius
+    modal.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.15)'; // reduced shadow
     modal.style.position = 'relative';
     modal.style.overflow = 'hidden';
 
     const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '×';
+    closeBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    `;
     closeBtn.style.position = 'absolute';
-    closeBtn.style.top = '8px';
-    closeBtn.style.right = '8px';
-    closeBtn.style.width = '32px';
-    closeBtn.style.height = '32px';
+    closeBtn.style.top = '12px';
+    closeBtn.style.right = '12px';
+    closeBtn.style.width = '28px';
+    closeBtn.style.height = '28px';
     closeBtn.style.border = 'none';
-    closeBtn.style.background = 'rgba(0, 0, 0, 0.1)';
-    closeBtn.style.borderRadius = '50%';
+    closeBtn.style.background = 'transparent';
+    closeBtn.style.borderRadius = '6px'; // md radius
     closeBtn.style.cursor = 'pointer';
-    closeBtn.style.fontSize = '20px';
+    closeBtn.style.fontSize = '16px';
     closeBtn.style.zIndex = 10;
     closeBtn.style.display = 'flex';
     closeBtn.style.alignItems = 'center';
     closeBtn.style.justifyContent = 'center';
+    closeBtn.style.color = '#495057';
+    closeBtn.style.transition = 'all 0.15s ease';
+    closeBtn.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    
+    // Hover effects for close button (ActionIcon subtle style)
+    closeBtn.addEventListener('mouseenter', () => {
+      closeBtn.style.background = 'rgba(134, 142, 150, 0.35)';
+    });
+    closeBtn.addEventListener('mouseleave', () => {
+      closeBtn.style.background = 'transparent';
+    });
     closeBtn.addEventListener('click', removeConfigOverlay);
 
     const iframe = document.createElement('iframe');
@@ -535,7 +581,18 @@
     iframe.style.width = '100%';
     iframe.style.height = '100%';
     iframe.style.border = 'none';
-    iframe.style.borderRadius = '12px';
+    iframe.style.borderRadius = '16px';
+
+    // ESC key functionality
+    const handleEscKey = (e) => {
+      if (e.key === 'Escape') {
+        removeConfigOverlay();
+      }
+    };
+    document.addEventListener('keydown', handleEscKey);
+    
+    // Store the handler for cleanup
+    configOverlay._escHandler = handleEscKey;
 
     // Set flag for config mode
     window.__feedbackConfigMode = true;
@@ -562,6 +619,10 @@
 
   function removeConfigOverlay() {
     if (configOverlay) {
+      // Remove ESC key listener
+      if (configOverlay._escHandler) {
+        document.removeEventListener('keydown', configOverlay._escHandler);
+      }
       configOverlay.remove();
       configOverlay = null;
       window.__feedbackConfigMode = false;

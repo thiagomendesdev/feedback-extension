@@ -630,7 +630,7 @@ function App() {
         <div style={{ padding: '24px' }}>
           <Stack gap="md">
             <Flex justify="flex-end" align="center">
-              <ActionIcon variant="light" onClick={() => setStep('config')} size="lg">
+              <ActionIcon variant="light" onClick={() => setStep('config')} size="lg" radius="md">
                 <IconSettings size={18} />
               </ActionIcon>
             </Flex>
@@ -640,6 +640,8 @@ function App() {
                 leftSection={<IconCamera size={16} />} 
                 onClick={handleCapture}
                 variant="filled"
+                size="md"
+                radius="md"
               >
                 Capture tab screen
               </Button>
@@ -647,7 +649,8 @@ function App() {
                 label="3s Timer" 
                 checked={useTimer} 
                 onChange={(e) => setUseTimer(e.currentTarget.checked)}
-                size="sm"
+                size="md"
+                radius="md"
               />
             </Group>
           </Stack>
@@ -701,39 +704,45 @@ function App() {
                     top: '16px',
                     right: '16px',
                     display: drawing ? 'none' : 'flex',
-                    gap: '8px',
+                    gap: '4px',
                     background: 'rgba(255, 255, 255, 0.98)',
                     backdropFilter: 'blur(12px)',
-                    borderRadius: '8px',
-                    padding: '8px',
+                    borderRadius: '12px',
+                    padding: '6px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
                     border: '1px solid rgba(0,0,0,0.08)',
                     zIndex: 10
                   }}
                 >
                   <ActionIcon 
-                    variant={drawMode === 'free' ? 'filled' : 'light'}
+                    variant="subtle"
                     onClick={() => setDrawMode('free')}
                     title="Free drawing"
-                    size="sm"
+                    size="md"
+                    radius="md"
+                    color={drawMode === 'free' ? 'blue' : 'gray'}
                   >
                     <IconPencil size={16} />
                   </ActionIcon>
                   <ActionIcon 
-                    variant={drawMode === 'line' ? 'filled' : 'light'}
+                    variant="subtle"
                     onClick={() => setDrawMode('line')}
                     title="Line"
-                    size="sm"
+                    size="md"
+                    radius="md"
+                    color={drawMode === 'line' ? 'blue' : 'gray'}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="7" y1="17" x2="17" y2="7"></line>
                     </svg>
                   </ActionIcon>
                   <ActionIcon 
-                    variant={drawMode === 'arrow' ? 'filled' : 'light'}
+                    variant="subtle"
                     onClick={() => setDrawMode('arrow')}
                     title="Arrow"
-                    size="sm"
+                    size="md"
+                    radius="md"
+                    color={drawMode === 'arrow' ? 'blue' : 'gray'}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="7" y1="17" x2="17" y2="7"></line>
@@ -741,27 +750,32 @@ function App() {
                     </svg>
                   </ActionIcon>
                   <ActionIcon 
-                    variant={drawMode === 'rect' ? 'filled' : 'light'}
+                    variant="subtle"
                     onClick={() => setDrawMode('rect')}
                     title="Rectangle"
-                    size="sm"
+                    size="md"
+                    radius="md"
+                    color={drawMode === 'rect' ? 'blue' : 'gray'}
                   >
                     <IconSquare size={16} />
                   </ActionIcon>
                   <ActionIcon 
-                    variant={drawMode === 'circle' ? 'filled' : 'light'}
+                    variant="subtle"
                     onClick={() => setDrawMode('circle')}
                     title="Circle"
-                    size="sm"
+                    size="md"
+                    radius="md"
+                    color={drawMode === 'circle' ? 'blue' : 'gray'}
                   >
                     <IconCircle size={16} />
                   </ActionIcon>
                   <ActionIcon 
-                    variant="light"
+                    variant="subtle"
                     onClick={handleClearDrawings}
                     title="Clear drawings"
                     color="red"
-                    size="sm"
+                    size="md"
+                    radius="md"
                   >
                     <IconTrash size={16} />
                   </ActionIcon>
@@ -796,7 +810,8 @@ function App() {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.currentTarget.value)}
-                  size="sm"
+                  size="md"
+                  radius="md"
                 />
                 
                 <Textarea
@@ -806,7 +821,8 @@ function App() {
                   onChange={(e) => setDetails(e.currentTarget.value)}
                   minRows={8}
                   maxRows={12}
-                  size="sm"
+                  size="md"
+                  radius="md"
                   style={{ flex: 1 }}
                 />
                 
@@ -814,6 +830,7 @@ function App() {
                   type="submit" 
                   leftSection={<IconSend size={16} />}
                   size="md"
+                  radius="md"
                   fullWidth
                   style={{ marginTop: 'auto' }}
                 >
@@ -844,11 +861,12 @@ function App() {
               placeholder="Personal Linear token"
               value={token}
               onChange={(e) => setToken(e.currentTarget.value)}
-              size="sm"
+              size="md"
+              radius="md"
             />
             
             {token && !/^lin_api_/.test(token) && (
-              <Alert color="red" variant="light" size="sm">
+              <Alert color="red" variant="light" size="sm" radius="md">
                 Invalid token. Must start with lin_api_
               </Alert>
             )}
@@ -863,7 +881,7 @@ function App() {
                   </Group>
                 )}
                 {teamsError && (
-                  <Alert color="red" variant="light" size="sm">
+                  <Alert color="red" variant="light" size="sm" radius="md">
                     {teamsError}
                   </Alert>
                 )}
@@ -873,14 +891,15 @@ function App() {
                     value={teamId}
                     onChange={setTeamId}
                     placeholder="Select a team"
-                    size="sm"
+                    size="md"
+                    radius="md"
                   />
                 )}
               </Stack>
             )}
             
             <Group mt="md">
-              <Button onClick={saveConfig} disabled={!token || !teamId} size="sm">
+              <Button onClick={saveConfig} disabled={!token || !teamId} size="md" radius="md">
                 Save
               </Button>
             </Group>
