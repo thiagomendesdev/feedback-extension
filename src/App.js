@@ -665,7 +665,7 @@ function App() {
       )}
 
       {step === 'draw' && (
-        <div style={{ height: '100vh', display: 'flex', gap: '32px', padding: '24px' }}>
+        <div style={{ height: '100vh', display: 'flex', gap: '32px', background: '#f8f9fa' }}>
           {/* Left side - Canvas area */}
           <div style={{ 
             flex: 1, 
@@ -675,7 +675,7 @@ function App() {
             position: 'relative',
             background: '#f8f9fa', // Mantine gray.1
             borderRadius: '12px',
-            padding: '16px',
+            padding: '24px',
             overflow: 'hidden'
           }}>
             {image ? (
@@ -797,7 +797,14 @@ function App() {
           </div>
 
           {/* Right side - Form */}
-          <div style={{ width: '300px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ 
+            width: '300px', 
+            display: 'flex', 
+            flexDirection: 'column',
+            background: '#fff',
+            borderRadius: '12px',
+            padding: '24px'
+          }}>
             <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Stack gap="md" style={{ flex: 1 }}>
                 <div>
