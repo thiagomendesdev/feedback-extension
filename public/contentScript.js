@@ -105,47 +105,8 @@
       chrome.runtime.sendMessage({ type: 'START_FEEDBACK_SELECTION_WITH_TIMER' });
     });
     
-    // Close button
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    `;
-    closeBtn.style.cssText = `
-      background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
-      border: 1px solid #ef4444;
-      cursor: pointer;
-      padding: 8px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #dc2626;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(239,68,68,0.2);
-      pointer-events: auto;
-    `;
-    closeBtn.title = 'Cancel selection (ESC)';
-    closeBtn.addEventListener('mouseover', () => {
-      closeBtn.style.background = 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)';
-      closeBtn.style.transform = 'translateY(-1px)';
-      closeBtn.style.boxShadow = '0 2px 8px rgba(239,68,68,0.3)';
-    });
-    closeBtn.addEventListener('mouseout', () => {
-      closeBtn.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)';
-      closeBtn.style.transform = 'translateY(0)';
-      closeBtn.style.boxShadow = '0 1px 3px rgba(239,68,68,0.2)';
-    });
-    closeBtn.addEventListener('click', () => {
-      removeOverlay();
-      chrome.runtime.sendMessage({ type: 'FEEDBACK_AREA_CANCEL' });
-    });
-    
     controlPanel.appendChild(configBtn);
     controlPanel.appendChild(timerBtn);
-    controlPanel.appendChild(closeBtn);
     document.body.appendChild(controlPanel);
   }
 
@@ -213,6 +174,11 @@
     selectionBox.style.top = startY + 'px';
     selectionBox.style.width = '0px';
     selectionBox.style.height = '0px';
+    
+    // Hide control panel when starting selection
+    if (controlPanel) {
+      controlPanel.style.display = 'none';
+    }
   }
 
   function onMouseMove(e) {

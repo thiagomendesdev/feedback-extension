@@ -313,8 +313,21 @@ function App() {
     const ctx = canvas.getContext('2d');
     const img = new window.Image();
     img.onload = () => {
+      // Set canvas to image's natural dimensions
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
+      
+      // Calculate display size that fits within container while maintaining aspect ratio
+      const containerMaxWidth = canvas.parentElement.clientWidth - 20; // Account for border and padding
+      const containerMaxHeight = canvas.parentElement.clientHeight - 20;
+      
+      const scaleX = containerMaxWidth / img.naturalWidth;
+      const scaleY = containerMaxHeight / img.naturalHeight;
+      const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+      
+      canvas.style.width = (img.naturalWidth * scale) + 'px';
+      canvas.style.height = (img.naturalHeight * scale) + 'px';
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
       // Desenho livre
@@ -391,6 +404,18 @@ function App() {
     img.onload = () => {
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
+      
+      // Calculate display size that fits within container while maintaining aspect ratio
+      const containerMaxWidth = canvas.parentElement.clientWidth - 20;
+      const containerMaxHeight = canvas.parentElement.clientHeight - 20;
+      
+      const scaleX = containerMaxWidth / img.naturalWidth;
+      const scaleY = containerMaxHeight / img.naturalHeight;
+      const scale = Math.min(scaleX, scaleY, 1);
+      
+      canvas.style.width = (img.naturalWidth * scale) + 'px';
+      canvas.style.height = (img.naturalHeight * scale) + 'px';
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
     };
@@ -626,7 +651,9 @@ function App() {
                 flex: 1, 
                 display: 'flex', 
                 alignItems: 'center', 
-                justifyContent: 'center'
+                justifyContent: 'center',
+                overflow: 'hidden',
+                maxHeight: 'calc(100vh - 120px)' // Account for padding and controls
               }}>
                 <canvas
                   ref={canvasRef}
@@ -636,7 +663,8 @@ function App() {
                     cursor: drawMode === 'free' ? 'crosshair' : 'pointer', 
                     maxWidth: '100%', 
                     maxHeight: '100%',
-                    display: 'block'
+                    display: 'block',
+                    objectFit: 'contain' // Ensure image scales proportionally
                   }}
                   onMouseDown={handleCanvasMouseDown}
                   onMouseUp={handleCanvasMouseUp}
